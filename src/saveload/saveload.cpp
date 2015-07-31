@@ -53,10 +53,12 @@
 
 #include "saveload_internal.h"
 #include "saveload_filter.h"
+#include "extended_ver_sl.h"
 
 #include "../safeguards.h"
 
 extern const SaveLoadVersion SAVEGAME_VERSION = (SaveLoadVersion)(SL_MAX_VERSION - 1); ///< Current savegame version of OpenTTD.
+const uint16 SAVEGAME_VERSION_EXT = 0x8000; ///< Savegame extension indicator mask
 
 SavegameType _savegame_type; ///< type of savegame we are loading
 FileToSaveLoad _file_to_saveload; ///< File to save or load in the openttd loop.
@@ -64,6 +66,7 @@ FileToSaveLoad _file_to_saveload; ///< File to save or load in the openttd loop.
 uint32 _ttdp_version;        ///< version of TTDP savegame (if applicable)
 SaveLoadVersion _sl_version; ///< the major savegame version identifier
 byte   _sl_minor_version;    ///< the minor savegame version, DO NOT USE!
+bool _sl_is_ext_version;     ///< is this an extended savegame version, with more info in the SLXI chunk?
 char _savegame_format[8];    ///< how to compress savegames
 bool _do_autosave;           ///< are we doing an autosave at the moment?
 
@@ -215,6 +218,7 @@ struct SaveLoadParams {
 static SaveLoadParams _sl; ///< Parameters used for/at saveload.
 
 /* these define the chunks */
+//extern const ChunkHandler _version_ext_chunk_handlers[];
 extern const ChunkHandler _gamelog_chunk_handlers[];
 extern const ChunkHandler _map_chunk_handlers[];
 extern const ChunkHandler _misc_chunk_handlers[];
@@ -251,6 +255,7 @@ extern const ChunkHandler _persistent_storage_chunk_handlers[];
 
 /** Array of all chunks in a savegame, \c nullptr terminated. */
 static const ChunkHandler * const _chunk_handlers[] = {
+//	_version_ext_chunk_handlers,            // this should be first, such that it is saved first, as when loading it affects the loading of subsequent chunks
 	_gamelog_chunk_handlers,
 	_map_chunk_handlers,
 	_misc_chunk_handlers,
@@ -304,6 +309,7 @@ static void SlNullPointers()
 	 * during NULLing; especially those that try to get
 	 * pointers from other pools. */
 	_sl_version = SAVEGAME_VERSION;
+	SlXvSetCurrentState();
 
 	DEBUG(sl, 1, "Nulling pointers");
 
@@ -1410,7 +1416,7 @@ static void SlDeque(void *deque, VarType conv)
 /** Are we going to save this object or not? */
 static inline bool SlIsObjectValidInSavegame(const SaveLoad *sld)
 {
-	if (_sl_version < sld->version_from || _sl_version >= sld->version_to) return false;
+	if (!sld->ext_feature_test.IsFeaturePresent(_sl_version, sld->version_from, sld->version_to)) return false;
 	if (sld->conv & SLF_NOT_IN_SAVE) return false;
 
 	return true;
@@ -1706,7 +1712,7 @@ static void SlLoadChunk(const ChunkHandler *ch)
 /**
  * Load a chunk of data for checking savegames.
  * If the chunkhandler is nullptr, the chunk is skipped.
- * @param ch The chunkhandler that will be used for the operation
+ * @param ch The chunkhandler that will be used for the operation, this may be nullptr
  */
 static void SlLoadCheckChunk(const ChunkHandler *ch)
 {
@@ -1720,14 +1726,14 @@ static void SlLoadCheckChunk(const ChunkHandler *ch)
 	switch (m) {
 		case CH_ARRAY:
 			_sl.array_index = 0;
-			if (ch->load_check_proc) {
+			if (ch && ch->load_check_proc) {
 				ch->load_check_proc();
 			} else {
 				SlSkipArray();
 			}
 			break;
 		case CH_SPARSE_ARRAY:
-			if (ch->load_check_proc) {
+			if (ch && ch->load_check_proc) {
 				ch->load_check_proc();
 			} else {
 				SlSkipArray();
@@ -1740,7 +1746,7 @@ static void SlLoadCheckChunk(const ChunkHandler *ch)
 				len += SlReadUint16();
 				_sl.obj_len = len;
 				endoffs = _sl.reader->GetSize() + len;
-				if (ch->load_check_proc) {
+				if (ch && ch->load_check_proc) {
 					ch->load_check_proc();
 				} else {
 					SlSkipBytes(len);
@@ -1822,8 +1828,16 @@ static void SlLoadChunks()
 		DEBUG(sl, 2, "Loading chunk %c%c%c%c", id >> 24, id >> 16, id >> 8, id);
 
 		ch = SlFindChunkHandler(id);
-		if (ch == nullptr) SlErrorCorrupt("Unknown chunk type");
-		SlLoadChunk(ch);
+		if (ch == nullptr) {
+			if (SlXvIsChunkDiscardable(id)) {
+				DEBUG(sl, 1, "Discarding chunk %c%c%c%c", id >> 24, id >> 16, id >> 8, id);
+				SlLoadCheckChunk(NULL);
+			} else {
+				SlErrorCorrupt("Unknown chunk type");
+			}
+		} else {
+			SlLoadChunk(ch);
+		}
 	}
 }
 
@@ -1837,7 +1851,7 @@ static void SlLoadCheckChunks()
 		DEBUG(sl, 2, "Loading chunk %c%c%c%c", id >> 24, id >> 16, id >> 8, id);
 
 		ch = SlFindChunkHandler(id);
-		if (ch == nullptr) SlErrorCorrupt("Unknown chunk type");
+		if (ch == nullptr && !SlXvIsChunkDiscardable(id)) SlErrorCorrupt("Unknown chunk type");
 		SlLoadCheckChunk(ch);
 	}
 }
@@ -2508,7 +2522,7 @@ static SaveOrLoadResult SaveFileToDisk(bool threaded)
 		const SaveLoadFormat *fmt = GetSavegameFormat(_savegame_format, &compression);
 
 		/* We have written our stuff to memory, now write it to file! */
-		uint32 hdr[2] = { fmt->tag, TO_BE32(SAVEGAME_VERSION << 16) };
+		uint32 hdr[2] = { fmt->tag, TO_BE32((uint32) (SAVEGAME_VERSION | SAVEGAME_VERSION_EXT) << 16) };
 		_sl.sf->Write((byte*)hdr, sizeof(hdr));
 
 		_sl.sf = fmt->init_write(_sl.sf, compression);
@@ -2567,6 +2581,7 @@ static SaveOrLoadResult DoSave(SaveFilter *writer, bool threaded)
 	_sl.sf = writer;
 
 	_sl_version = SAVEGAME_VERSION;
+	SlXvSetCurrentState();
 
 	SaveViewportBeforeSaveGame();
 	SlSaveChunks();
@@ -2619,6 +2634,8 @@ static SaveOrLoadResult DoLoad(LoadFilter *reader, bool load_check)
 		_load_check_data.checkable = true;
 	}
 
+	SlXvResetState();
+
 	uint32 hdr[2];
 	if (_sl.lf->Read((byte*)hdr, sizeof(hdr)) != sizeof(hdr)) SlError(STR_GAME_SAVELOAD_ERROR_FILE_NOT_READABLE);
 
@@ -2631,6 +2648,8 @@ static SaveOrLoadResult DoLoad(LoadFilter *reader, bool load_check)
 			_sl.lf->Reset();
 			_sl_version = SL_MIN_VERSION;
 			_sl_minor_version = 0;
+			_sl_is_ext_version = false;
+			SlXvResetState();
 
 			/* Try to find the LZO savegame format; it uses 'OTTD' as tag. */
 			fmt = _saveload_formats;
@@ -2653,7 +2672,14 @@ static SaveOrLoadResult DoLoad(LoadFilter *reader, bool load_check)
 			 * Therefore it is loaded, but never saved (or, it saves a 0 in any scenario). */
 			_sl_minor_version = (TO_BE32(hdr[1]) >> 8) & 0xFF;
 
-			DEBUG(sl, 1, "Loading savegame version %d", _sl_version);
+			if (_sl_version & SAVEGAME_VERSION_EXT) {
+				_sl_version = (SaveLoadVersion)(_sl_version & ~SAVEGAME_VERSION_EXT);
+				_sl_is_ext_version = true;
+			} else {
+				SlXvCheckSpecialSavegameVersions();
+			}
+
+			DEBUG(sl, 1, "Loading savegame version %d%s", _sl_version, _sl_is_ext_version ? " (extended)" : "");
 
 			/* Is the version higher than the current? */
 			if (_sl_version > SAVEGAME_VERSION) SlError(STR_GAME_SAVELOAD_ERROR_TOO_NEW_SAVEGAME);
@@ -2795,6 +2821,8 @@ SaveOrLoadResult SaveOrLoad(const char *filename, SaveLoadOperation fop, Detaile
 			if (!LoadOldSaveGame(filename)) return SL_REINIT;
 			_sl_version = SL_MIN_VERSION;
 			_sl_minor_version = 0;
+			_sl_is_ext_version = false;
+			SlXvResetState();
 			GamelogStartAction(GLAT_LOAD);
 			if (!AfterLoadGame()) {
 				GamelogStopAction();

@@ -11,6 +11,8 @@ add_files(
     depot_sl.cpp
     economy_sl.cpp
     engine_sl.cpp
+    extended_ver_sl.cpp
+    extended_ver_sl.h
     game_sl.cpp
     gamelog_sl.cpp
     goal_sl.cpp
