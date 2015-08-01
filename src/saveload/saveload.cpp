@@ -439,41 +439,24 @@ void SlWriteByte(byte b)
 	_sl.dumper->WriteByte(b);
 }
 
-static inline int SlReadUint16()
+/**
+ * Returns number of bytes read so far
+ * May only be called during a load/load check action
+ */
+size_t SlGetBytesRead()
 {
-	int x = SlReadByte() << 8;
-	return x | SlReadByte();
+	assert(_sl.action == SLA_LOAD || _sl.action == SLA_LOAD_CHECK);
+	return _sl.reader->GetSize();
 }
 
-static inline uint32 SlReadUint32()
+/**
+ * Returns number of bytes written so far
+ * May only be called during a save action
+ */
+size_t SlGetBytesWritten()
 {
-	uint32 x = SlReadUint16() << 16;
-	return x | SlReadUint16();
-}
-
-static inline uint64 SlReadUint64()
-{
-	uint32 x = SlReadUint32();
-	uint32 y = SlReadUint32();
-	return (uint64)x << 32 | y;
-}
-
-static inline void SlWriteUint16(uint16 v)
-{
-	SlWriteByte(GB(v, 8, 8));
-	SlWriteByte(GB(v, 0, 8));
-}
-
-static inline void SlWriteUint32(uint32 v)
-{
-	SlWriteUint16(GB(v, 16, 16));
-	SlWriteUint16(GB(v,  0, 16));
-}
-
-static inline void SlWriteUint64(uint64 x)
-{
-	SlWriteUint32((uint32)(x >> 32));
-	SlWriteUint32((uint32)x);
+	assert(_sl.action == SLA_SAVE);
+	return _sl.dumper->GetSize();
 }
 
 /**
