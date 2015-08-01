@@ -2750,6 +2750,8 @@ static SaveOrLoadResult DoLoad(LoadFilter *reader, bool load_check)
 		GamelogStopAction();
 	}
 
+	SlXvSetCurrentState();
+
 	return SL_OK;
 }
 
@@ -2811,6 +2813,7 @@ SaveOrLoadResult SaveOrLoad(const char *filename, SaveLoadOperation fop, Detaile
 				return SL_REINIT;
 			}
 			GamelogStopAction();
+			SlXvSetCurrentState();
 			return SL_OK;
 		}
 
