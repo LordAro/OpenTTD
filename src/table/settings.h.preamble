@@ -62,7 +62,7 @@ static size_t ConvertLandscape(const char *value);
 /* Macros for various objects to go in the configuration file.
  * This section is for global variables */
 #define SDTG_GENERAL(name, sdt_cmd, sle_cmd, type, flags, guiflags, var, length, def, min, max, interval, full, str, strhelp, strval, proc, from, to, cat, extver, patxname)\
-	{NSD_GENERAL(name, def, sdt_cmd, guiflags, min, max, interval, full, str, strhelp, strval, proc, nullptr, cat), SLEG_GENERAL_X(sle_cmd, var, type | flags, length, from, to, extver), patxname}
+	{NSD_GENERAL(name, def, sdt_cmd, guiflags, min, max, interval, full, str, strhelp, strval, proc, nullptr, cat), SLEG_GENERAL_X(sle_cmd, var, type | flags, length, from, to, extver), patxname, nullptr}
 
 #define SDTG_VAR(name, type, flags, guiflags, var, def, min, max, interval, str, strhelp, strval, proc, from, to, cat, extver, patxname)\
 	SDTG_GENERAL(name, SDT_NUMX, SL_VAR, type, flags, guiflags, var, 0, def, min, max, interval, nullptr, str, strhelp, strval, proc, from, to, cat, extver, patxname)
@@ -86,14 +86,14 @@ static size_t ConvertLandscape(const char *value);
 	SDTG_GENERAL(name, SDT_MANYOFMANY, SL_VAR, type, flags, guiflags, var, 0, def, 0, 0, 0, full, str, strhelp, strval, proc, from, to, cat, extver, patxname)
 
 #define SDTG_NULL(length, from, to, extver)\
-	{{"", nullptr, SDT_NUMX, SGF_NONE, 0, 0, 0, nullptr, STR_NULL, STR_NULL, STR_NULL, nullptr, nullptr, SC_NONE}, SLEG_NULL_X(length, from, to, extver), nullptr}
+	{{"", nullptr, SDT_NUMX, SGF_NONE, 0, 0, 0, nullptr, STR_NULL, STR_NULL, STR_NULL, nullptr, nullptr, SC_NONE}, SLEG_NULL_X(length, from, to, extver), nullptr, nullptr}
 
-#define SDTG_END() {{nullptr, nullptr, SDT_NUMX, SGF_NONE, 0, 0, 0, nullptr, STR_NULL, STR_NULL, STR_NULL, nullptr, nullptr, SC_NONE}, SLEG_END(), nullptr}
+#define SDTG_END() {{nullptr, nullptr, SDT_NUMX, SGF_NONE, 0, 0, 0, nullptr, STR_NULL, STR_NULL, STR_NULL, nullptr, nullptr, SC_NONE}, SLEG_END(), nullptr, nullptr}
 
 /* Macros for various objects to go in the configuration file.
  * This section is for structures where their various members are saved */
 #define SDT_GENERAL(name, sdt_cmd, sle_cmd, type, flags, guiflags, base, var, length, def, min, max, interval, full, str, strhelp, strval, proc, load, from, to, cat, extver, patxname)\
-	{NSD_GENERAL(name, def, sdt_cmd, guiflags, min, max, interval, full, str, strhelp, strval, proc, load, cat), SLE_GENERAL_X(sle_cmd, base, var, type | flags, length, from, to, extver), patxname}
+	{NSD_GENERAL(name, def, sdt_cmd, guiflags, min, max, interval, full, str, strhelp, strval, proc, load, cat), SLE_GENERAL_X(sle_cmd, base, var, type | flags, length, from, to, extver), patxname, NULL}
 
 #define SDT_VAR(base, var, type, flags, guiflags, def, min, max, interval, str, strhelp, strval, proc, from, to, cat, extver, patxname)\
 	SDT_GENERAL(#var, SDT_NUMX, SL_VAR, type, flags, guiflags, base, var, 1, def, min, max, interval, nullptr, str, strhelp, strval, proc, nullptr, from, to, cat, extver, patxname)
@@ -117,7 +117,7 @@ static size_t ConvertLandscape(const char *value);
 	SDT_GENERAL(#var, SDT_MANYOFMANY, SL_VAR, type, flags, guiflags, base, var, 1, def, 0, 0, 0, full, str, strhelp, strval, proc, nullptr, from, to, cat, extver, patxname)
 
 #define SDT_NULL(length, from, to, extver)\
-	{{"", nullptr, SDT_NUMX, SGF_NONE, 0, 0, 0, nullptr, STR_NULL, STR_NULL, STR_NULL, nullptr, nullptr, SC_NONE}, SLE_CONDNULL_X(length, from, to, extver), nullptr}
+	{{"", nullptr, SDT_NUMX, SGF_NONE, 0, 0, 0, nullptr, STR_NULL, STR_NULL, STR_NULL, nullptr, nullptr, SC_NONE}, SLE_CONDNULL_X(length, from, to, extver), nullptr, nullptr}
 
 
 #define SDTC_VAR(var, type, flags, guiflags, def, min, max, interval, str, strhelp, strval, proc, from, to, cat, extver, patxname)\
@@ -135,4 +135,7 @@ static size_t ConvertLandscape(const char *value);
 #define SDTC_OMANY(var, type, flags, guiflags, def, max, full, str, strhelp, strval, proc, from, to, cat, extver, patxname)\
 	SDTG_GENERAL(#var, SDT_ONEOFMANY, SL_VAR, type, flags, guiflags, _settings_client.var, 1, def, 0, max, 0, full, str, strhelp, strval, proc, from, to, cat, extver, patxname)
 
-#define SDT_END() {{nullptr, nullptr, SDT_NUMX, SGF_NONE, 0, 0, 0, nullptr, STR_NULL, STR_NULL, STR_NULL, nullptr, nullptr, SC_NONE}, SLE_END(), nullptr}
+#define SDT_XREF(from, to, extver, xref)\
+	{{"", nullptr, SDT_NUMX, SGF_NONE, 0, 0, 0, nullptr, STR_NULL, STR_NULL, STR_NULL, NULL, NULL, SC_NONE}, SLE_CONDNULL_X(0, from, to, extver), nullptr, xref}
+
+#define SDT_END() {{nullptr, nullptr, SDT_NUMX, SGF_NONE, 0, 0, 0, nullptr, STR_NULL, STR_NULL, STR_NULL, nullptr, nullptr, SC_NONE}, SLE_END(), nullptr, nullptr}
