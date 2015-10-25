@@ -1783,7 +1783,7 @@ static void SlLoadCheckChunk(const ChunkHandler *ch)
 				if (ext_flags & SLCEHF_BIG_RIFF) {
 					uint64 full_len = len | (static_cast<uint64>(SlReadUint32()) << 28);
 					if (full_len >= (1LL << 32)) {
-						SlErrorCorrupt("Chunk size too large: " OTTD_PRINTFHEX64, full_len);
+						SlErrorCorruptFmt("Chunk size too large: " OTTD_PRINTFHEX64, full_len);
 					}
 					len = static_cast<size_t>(full_len);
 				}
@@ -1874,7 +1874,7 @@ static void SlLoadChunks()
 		if (ch == nullptr) {
 			if (SlXvIsChunkDiscardable(id)) {
 				DEBUG(sl, 1, "Discarding chunk %c%c%c%c", id >> 24, id >> 16, id >> 8, id);
-				SlLoadCheckChunk(NULL);
+				SlLoadCheckChunk(nullptr);
 			} else {
 				SlErrorCorrupt("Unknown chunk type");
 			}
