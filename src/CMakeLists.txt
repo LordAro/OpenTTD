@@ -327,6 +327,7 @@ add_files(
     roadveh_cmd.cpp
     roadveh_gui.cpp
     safeguards.h
+    scope.h
     screenshot_gui.cpp
     screenshot_gui.h
     screenshot.cpp
