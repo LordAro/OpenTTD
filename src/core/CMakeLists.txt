@@ -5,6 +5,7 @@ add_files(
     backup_type.hpp
     bitmath_func.cpp
     bitmath_func.hpp
+    container_func.hpp
     endian_func.hpp
     endian_type.hpp
     enum_type.hpp
