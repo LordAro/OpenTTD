@@ -512,6 +512,7 @@ enum SaveLoadTypes {
 	SL_LST         =  4, ///< Save/load a list.
 	SL_DEQUE       =  5, ///< Save/load a deque.
 	SL_STDSTR      =  6, ///< Save/load a \c std::string.
+	SL_VECTOR      =  7, ///< Save/load a vector.
 	/* non-normal save-load types */
 	SL_WRITEBYTE   =  8,
 	SL_VEH_INCLUDE =  9,
@@ -640,6 +641,18 @@ typedef SaveLoad SaveLoadGlobVarList;
 #define SLE_CONDDEQUE(base, variable, type, from, to) SLE_CONDDEQUE_X(base, variable, type, from, to, SlXvFeatureTest())
 
 /**
+ * Storage of a vector in some savegame versions.
+ * @param base     Name of the class or struct containing the list.
+ * @param variable Name of the variable in the class or struct referenced by \a base.
+ * @param type     Storage of the data in memory and in the savegame.
+ * @param from     First savegame version that has the list.
+ * @param to       Last savegame version that has the list.
+ * @param extver   SlXvFeatureTest to test (along with from and to) which savegames have the field
+ */
+#define SLE_CONDVECTOR_X(base, variable, type, from, to, extver) SLE_GENERAL_X(SL_VECTOR, base, variable, type, 0, from, to, extver)
+#define SLE_CONDVECTOR(base, variable, type, from, to) SLE_CONDVECTOR_X(base, variable, type, from, to, SlXvFeatureTest())
+
+/**
  * Storage of a variable in every version of a savegame.
  * @param base     Name of the class or struct containing the variable.
  * @param variable Name of the variable in the class or struct referenced by \a base.
@@ -696,6 +709,14 @@ typedef SaveLoad SaveLoadGlobVarList;
  * @param type     Storage of the data in memory and in the savegame.
  */
 #define SLE_DEQUE(base, variable, type) SLE_CONDDEQUE(base, variable, type, 0, SL_MAX_VERSION)
+
+/**
+ * Storage of a vector in every savegame version.
+ * @param base     Name of the class or struct containing the list.
+ * @param variable Name of the variable in the class or struct referenced by \a base.
+ * @param type     Storage of the data in memory and in the savegame.
+ */
+#define SLE_VECTOR(base, variable, type) SLE_CONDVECTOR(base, variable, type, 0, SL_MAX_VERSION)
 
 /**
  * Empty space in every savegame version.
@@ -813,6 +834,17 @@ typedef SaveLoad SaveLoadGlobVarList;
 #define SLEG_CONDDEQUE(variable, type, from, to) SLEG_CONDDEQUE_X(variable, type, from, to, SlXvFeatureTest())
 
 /**
+ * Storage of a global vector in some savegame versions.
+ * @param variable Name of the global variable.
+ * @param type     Storage of the data in memory and in the savegame.
+ * @param from     First savegame version that has the list.
+ * @param to       Last savegame version that has the list.
+ * @param extver   SlXvFeatureTest to test (along with from and to) which savegames have the field
+ */
+#define SLEG_CONDVECTOR_X(variable, type, from, to, extver) SLEG_GENERAL_X(SL_VECTOR, variable, type, 0, from, to, extver)
+#define SLEG_CONDVECTOR(variable, type, from, to) SLEG_CONDVECTOR_X(variable, type, from, to, SlXvFeatureTest())
+
+/**
  * Storage of a global variable in every savegame version.
  * @param variable Name of the global variable.
  * @param type     Storage of the data in memory and in the savegame.
@@ -860,6 +892,13 @@ typedef SaveLoad SaveLoadGlobVarList;
  * @param type     Storage of the data in memory and in the savegame.
  */
 #define SLEG_DEQUE(variable, type) SLEG_CONDDEQUE(variable, type, 0, SL_MAX_VERSION)
+
+/**
+ * Storage of a global vector in every savegame version.
+ * @param variable Name of the global variable.
+ * @param type     Storage of the data in memory and in the savegame.
+ */
+#define SLEG_VECTOR(variable, type) SLEG_CONDVECTOR(variable, type, 0, SL_MAX_VERSION)
 
 /**
  * Empty global space in some savegame versions.
