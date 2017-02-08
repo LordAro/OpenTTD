@@ -6,6 +6,7 @@ add_files(
     bitmath_func.cpp
     bitmath_func.hpp
     container_func.hpp
+    dyn_arena_alloc.hpp
     endian_func.hpp
     endian_type.hpp
     enum_type.hpp
