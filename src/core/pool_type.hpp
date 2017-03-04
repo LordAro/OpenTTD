@@ -371,6 +371,13 @@ struct Pool : PoolBase {
 		static inline void PostDestructor(size_t index) { }
 
 		/**
+		 * Dummy function called before a pool is about to be cleaned.
+		 * If you want to use it, override it in PoolItem's subclass.
+		 * @note it's called only when CleaningPool()
+		 */
+		static inline void PreCleanPool() { }
+
+		/**
 		 * Returns an iterable ensemble of all valid Titem
 		 * @param from index of the first Titem to consider
 		 * @return an iterable ensemble of all valid Titem
