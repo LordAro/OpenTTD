@@ -209,85 +209,84 @@ protected:
 	}
 
 	/** Sort stations by their name */
-	static int CDECL StationNameSorter(const Station * const *a, const Station * const *b)
+	static bool CDECL StationNameSorter(const Station * const &a, const Station * const &b)
 	{
 		static char buf_cache[64];
-		char buf[64];
+		static char buf[64];
 
-		SetDParam(0, (*a)->index);
+		SetDParam(0, a->index);
 		GetString(buf, STR_STATION_NAME, lastof(buf));
 
-		if (*b != last_station) {
-			last_station = *b;
-			SetDParam(0, (*b)->index);
+		if (b != CompanyStationsWindow::last_station) {
+			CompanyStationsWindow::last_station = b;
+			SetDParam(0, b->index);
 			GetString(buf_cache, STR_STATION_NAME, lastof(buf_cache));
 		}
 
 		int r = strnatcmp(buf, buf_cache); // Sort by name (natural sorting).
-		if (r == 0) return (*a)->index - (*b)->index;
-		return r;
+		return r == 0 ? a->index < b->index : r < 0;
 	}
 
 	/** Sort stations by their type */
-	static int CDECL StationTypeSorter(const Station * const *a, const Station * const *b)
+	static bool CDECL StationTypeSorter(const Station * const &a, const Station * const &b)
 	{
-		return (*a)->facilities - (*b)->facilities;
+		return a->facilities < b->facilities;
 	}
 
 	/** Sort stations by their waiting cargo */
-	static int CDECL StationWaitingTotalSorter(const Station * const *a, const Station * const *b)
+	static bool CDECL StationWaitingTotalSorter(const Station * const &a, const Station * const &b)
 	{
-		int diff = 0;
+		int totala = 0;
+		int totalb = 0;
 
 		CargoID j;
 		FOR_EACH_SET_CARGO_ID(j, cargo_filter) {
-			diff += (*a)->goods[j].cargo.TotalCount() - (*b)->goods[j].cargo.TotalCount();
+			totala += a->goods[j].cargo.TotalCount();
+			totalb += b->goods[j].cargo.TotalCount();
 		}
-
-		return diff;
+		return totala < totalb;
 	}
 
 	/** Sort stations by their available waiting cargo */
-	static int CDECL StationWaitingAvailableSorter(const Station * const *a, const Station * const *b)
+	static bool CDECL StationWaitingAvailableSorter(const Station * const &a, const Station * const &b)
 	{
-		int diff = 0;
+		int totala = 0;
+		int totalb = 0;
 
 		CargoID j;
 		FOR_EACH_SET_CARGO_ID(j, cargo_filter) {
-			diff += (*a)->goods[j].cargo.AvailableCount() - (*b)->goods[j].cargo.AvailableCount();
+			totala += a->goods[j].cargo.AvailableCount();
+			totalb += b->goods[j].cargo.AvailableCount();
 		}
-
-		return diff;
+		return totala < totalb;
 	}
 
 	/** Sort stations by their rating */
-	static int CDECL StationRatingMaxSorter(const Station * const *a, const Station * const *b)
+	static bool CDECL StationRatingMaxSorter(const Station * const &a, const Station * const &b)
 	{
 		byte maxr1 = 0;
 		byte maxr2 = 0;
 
 		CargoID j;
 		FOR_EACH_SET_CARGO_ID(j, cargo_filter) {
-			if ((*a)->goods[j].HasRating()) maxr1 = max(maxr1, (*a)->goods[j].rating);
-			if ((*b)->goods[j].HasRating()) maxr2 = max(maxr2, (*b)->goods[j].rating);
+			if (a->goods[j].HasRating()) maxr1 = max(maxr1, a->goods[j].rating);
+			if (b->goods[j].HasRating()) maxr2 = max(maxr2, b->goods[j].rating);
 		}
-
-		return maxr1 - maxr2;
+		return maxr1 < maxr2;
 	}
 
 	/** Sort stations by their rating */
-	static int CDECL StationRatingMinSorter(const Station * const *a, const Station * const *b)
+	static bool CDECL StationRatingMinSorter(const Station * const &a, const Station * const &b)
 	{
 		byte minr1 = 255;
 		byte minr2 = 255;
 
 		for (CargoID j = 0; j < NUM_CARGO; j++) {
 			if (!HasBit(cargo_filter, j)) continue;
-			if ((*a)->goods[j].HasRating()) minr1 = min(minr1, (*a)->goods[j].rating);
-			if ((*b)->goods[j].HasRating()) minr2 = min(minr2, (*b)->goods[j].rating);
+			if (a->goods[j].HasRating()) minr1 = min(minr1, a->goods[j].rating);
+			if (b->goods[j].HasRating()) minr2 = min(minr2, b->goods[j].rating);
 		}
-
-		return -(minr1 - minr2);
+		return minr2 < minr1; // Inverse
 	}
 
 	/** Sort the stations list */
@@ -296,7 +295,7 @@ protected:
 		if (!this->stations.Sort()) return;
 
 		/* Reset name sorter sort cache */
-		this->last_station = NULL;
+		CompanyStationsWindow::last_station = NULL;
 
 		/* Set the modified widget dirty */
 		this->SetWidgetDirty(WID_STL_LIST);

@@ -127,9 +127,9 @@ void ResolveRailTypeGUISprites(RailtypeInfo *rti)
  * @param second The railtype to compare.
  * @return True iff the first should be sorted before the second.
  */
-static int CDECL CompareRailTypes(const RailType *first, const RailType *second)
+static bool CDECL CompareRailTypes(const RailType &first, const RailType &second)
 {
-	return GetRailTypeInfo(*first)->sorting_order - GetRailTypeInfo(*second)->sorting_order;
+	return GetRailTypeInfo(first)->sorting_order < GetRailTypeInfo(second)->sorting_order;
 }
 
 /**
@@ -148,7 +148,7 @@ void InitRailTypes()
 			_sorted_railtypes[_sorted_railtypes_size++] = rt;
 		}
 	}
-	QSortT(_sorted_railtypes, _sorted_railtypes_size, CompareRailTypes);
+	std::sort(_sorted_railtypes, _sorted_railtypes + _sorted_railtypes_size, CompareRailTypes);
 }
 
 /**

@@ -329,7 +329,7 @@ void EngList_Sort(GUIEngineList *el, EngList_SortTypeFunction compare)
 	/* out-of-bounds access at the next line for size == 0 (even with operator[] at some systems)
 	 * generally, do not sort if there are less than 2 items */
 	if (size < 2) return;
-	QSortT(el->Begin(), size, compare);
+	std::sort(el->Begin(), el->End(), compare);
 }
 
 /**
@@ -344,6 +344,6 @@ void EngList_SortPartial(GUIEngineList *el, EngList_SortTypeFunction compare, ui
 	if (num_items < 2) return;
 	assert(begin < el->Length());
 	assert(begin + num_items <= el->Length());
-	QSortT(el->Get(begin), num_items, compare);
+	std::sort(el->Get(begin), el->Get(begin + num_items), compare);
 }
 

@@ -1438,15 +1438,13 @@ struct NewGRFWindow : public Window, NewGRFScanCallback {
 
 private:
 	/** Sort grfs by name. */
-	static int CDECL NameSorter(const GRFConfig * const *a, const GRFConfig * const *b)
+	static bool CDECL NameSorter(const GRFConfig * const &a, const GRFConfig * const &b)
 	{
-		int i = strnatcmp((*a)->GetName(), (*b)->GetName(), true); // Sort by name (natural sorting).
-		if (i != 0) return i;
+		int i = strnatcmp(a->GetName(), b->GetName(), true); // Sort by name (natural sorting).
+		if (i != 0) return i < 0;
 
-		i = (*a)->version - (*b)->version;
-		if (i != 0) return i;
-
-		return memcmp((*a)->ident.md5sum, (*b)->ident.md5sum, lengthof((*b)->ident.md5sum));
+		if (a->version != b->version) return a->version < b->version;
+		return memcmp(a->ident.md5sum, b->ident.md5sum, lengthof(b->ident.md5sum)) < 0;
 	}
 
 	/** Filter grfs by tags/name */

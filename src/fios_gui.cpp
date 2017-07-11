@@ -221,8 +221,7 @@ static void SortSaveGameList(FileList &file_list)
 		}
 	}
 
-	uint s_amount = file_list.Length() - sort_start - sort_end;
-	QSortT(file_list.Get(sort_start), s_amount, CompareFiosItems);
+	std::sort(file_list.Get(sort_start), file_list.Get(sort_end), CompareFiosItems);
 }
 
 struct SaveLoadWindow : public Window {

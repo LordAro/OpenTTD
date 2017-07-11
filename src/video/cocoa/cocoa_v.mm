@@ -36,6 +36,7 @@
 #include "../../window_func.h"
 #include "../../window_gui.h"
 
+#import <algorithm>
 #import <sys/param.h> /* for MAXPATHLEN */
 
 /**
@@ -234,13 +235,9 @@ static void setupApplication()
 }
 
 
-static int CDECL ModeSorter(const OTTD_Point *p1, const OTTD_Point *p2)
+static bool CDECL ModeSorter(const OTTD_Point &p1, const OTTD_Point &p2)
 {
-	if (p1->x < p2->x) return -1;
-	if (p1->x > p2->x) return +1;
-	if (p1->y < p2->y) return -1;
-	if (p1->y > p2->y) return +1;
-	return 0;
+	return p1.x < p2.x || p1.y < p2.y;
 }
 
 static void QZ_GetDisplayModeInfo(CFArrayRef modes, CFIndex i, int &bpp, uint16 &width, uint16 &height)
@@ -326,7 +323,7 @@ uint QZ_ListModes(OTTD_Point *modes, uint max_modes, CGDirectDisplayID display_i
 	}
 
 	/* Sort list smallest to largest */
-	QSortT(modes, count, &ModeSorter);
+	std::sort(modes, modes + count, &ModeSorter);
 
 #if (MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6)
 	if (MacOSVersionIsAtLeast(10, 6, 0)) CFRelease(mode_list);

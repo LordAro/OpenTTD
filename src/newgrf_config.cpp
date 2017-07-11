@@ -706,17 +706,14 @@ bool GRFFileScanner::AddFile(const char *filename, size_t basepath_length, const
 }
 
 /**
- * Simple sorter for GRFS
- * @param p1 the first GRFConfig *
- * @param p2 the second GRFConfig *
- * @return the same strcmp would return for the name of the NewGRF.
+ * Simple sorter for GRFs.
+ * @param c1 The first #GRFConfig.
+ * @param c2 The second #GRFConfig.
+ * @return True if c1 < c2, when sorted naturally.
  */
-static int CDECL GRFSorter(GRFConfig * const *p1, GRFConfig * const *p2)
+static bool CDECL GRFSorter(GRFConfig * const &c1, GRFConfig * const &c2)
 {
-	const GRFConfig *c1 = *p1;
-	const GRFConfig *c2 = *p2;
-
-	return strnatcmp(c1->GetName(), c2->GetName());
+	return strnatcmp(c1->GetName(), c2->GetName()) < 0;
 }
 
 /**
@@ -747,7 +744,7 @@ void DoScanNewGRFFiles(void *callback)
 		/* Number of files is not necessarily right */
 		num = i;
 
-		QSortT(to_sort, num, &GRFSorter);
+		std::sort(to_sort, to_sort + num, &GRFSorter);
 
 		for (i = 1; i < num; i++) {
 			to_sort[i - 1]->next = to_sort[i];

@@ -16,7 +16,6 @@
 #include "window_func.h"
 #include "vehicle_base.h"
 #include "cmd_helper.h"
-#include "core/sort_func.hpp"
 
 #include "table/strings.h"
 
@@ -215,19 +214,16 @@ CommandCost CmdSetVehicleOnTime(TileIndex tile, DoCommandFlag flags, uint32 p1, 
 /**
  * Order vehicles based on their timetable. The vehicles will be sorted in order
  * they would reach the first station.
- *
- * @param ap First Vehicle pointer.
- * @param bp Second Vehicle pointer.
+ * @param a First Vehicle.
+ * @param b Second Vehicle.
  * @return Comparison value.
  */
-static int CDECL VehicleTimetableSorter(Vehicle * const *ap, Vehicle * const *bp)
+static bool CDECL VehicleTimetableSorter(Vehicle * const &a, Vehicle * const &b)
 {
-	const Vehicle *a = *ap;
-	const Vehicle *b = *bp;
-
 	VehicleOrderID a_order = a->cur_real_order_index;
 	VehicleOrderID b_order = b->cur_real_order_index;
-	int j = (int)b_order - (int)a_order;
+
+	int j = (int)b_order - (int)a_order; // Compute early, as the values may be altered by load status
 
 	/* Are we currently at an ordered station (un)loading? */
 	bool a_load = a->current_order.IsType(OT_LOADING) && a->current_order.GetNonStopType() != ONSF_STOP_EVERYWHERE;
@@ -242,15 +238,15 @@ static int CDECL VehicleTimetableSorter(Vehicle * const *ap, Vehicle * const *bp
 
 	/* First check the order index that accounted for loading, then just the raw one. */
 	int i = (int)b_order - (int)a_order;
-	if (i != 0) return i;
-	if (j != 0) return j;
+	if (i != 0) return i < 0;
+	if (j != 0) return j < 0;
 
 	/* Look at the time we spent in this order; the higher, the closer to its destination. */
 	i = b->current_order_time - a->current_order_time;
-	if (i != 0) return i;
+	if (i != 0) return i < 0;
 
 	/* If all else is equal, use some unique index to sort it the same way. */
-	return b->unitnumber - a->unitnumber;
+	return b->unitnumber < a->unitnumber;
 }
 
 /**
@@ -295,7 +291,7 @@ CommandCost CmdSetTimetableStart(TileIndex tile, DoCommandFlag flags, uint32 p1,
 		int num_vehs = vehs.Length();
 
 		if (num_vehs >= 2) {
-			QSortT(vehs.Begin(), vehs.Length(), &VehicleTimetableSorter);
+			std::sort(vehs.Begin(), vehs.End(), &VehicleTimetableSorter);
 		}
 
 		int base = vehs.FindIndex(v);

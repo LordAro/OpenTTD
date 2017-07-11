@@ -206,7 +206,7 @@ struct GameOptionsWindow : Window {
 					if (i == CURRENCY_CUSTOM) continue;
 					*list->Append() = new DropDownListStringItem(*items, i, HasBit(disabled, i));
 				}
-				QSortT(list->Begin(), list->Length(), DropDownListStringItem::NatSortFunc);
+				std::sort(list->Begin(), list->End(), DropDownListStringItem::NatSortFunc);
 
 				/* Append custom currency at the end */
 				*list->Append() = new DropDownListItem(-1, false); // separator line
@@ -244,7 +244,7 @@ struct GameOptionsWindow : Window {
 					int result = _nb_orig_names + i;
 					*list->Append() = new DropDownListStringItem(_grf_names[i], result, enabled_item != result && enabled_item >= 0);
 				}
-				QSortT(list->Begin(), list->Length(), DropDownListStringItem::NatSortFunc);
+				std::sort(list->Begin(), list->End(), DropDownListStringItem::NatSortFunc);
 
 				int newgrf_size = list->Length();
 				/* Insert newgrf_names at the top of the list */
@@ -257,7 +257,7 @@ struct GameOptionsWindow : Window {
 				for (int i = 0; i < _nb_orig_names; i++) {
 					*list->Append() = new DropDownListStringItem(STR_GAME_OPTIONS_TOWN_NAME_ORIGINAL_ENGLISH + i, i, enabled_item != i && enabled_item >= 0);
 				}
-				QSortT(list->Begin() + newgrf_size, list->Length() - newgrf_size, DropDownListStringItem::NatSortFunc);
+				std::sort(list->Begin() + newgrf_size, list->End(), DropDownListStringItem::NatSortFunc);
 				break;
 			}
 
@@ -277,7 +277,7 @@ struct GameOptionsWindow : Window {
 					if (&_languages[i] == _current_language) *selected_index = i;
 					*list->Append() = new DropDownListStringItem(SPECSTR_LANGUAGE_START + i, i, false);
 				}
-				QSortT(list->Begin(), list->Length(), DropDownListStringItem::NatSortFunc);
+				std::sort(list->Begin(), list->End(), DropDownListStringItem::NatSortFunc);
 				break;
 			}
 

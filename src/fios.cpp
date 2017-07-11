@@ -45,21 +45,20 @@ extern void GetOldSaveGameName(const char *file, char *title, const char *last);
 
 /**
  * Compare two FiosItem's. Used with sort when sorting the file list.
- * @param da A pointer to the first FiosItem to compare.
- * @param db A pointer to the second FiosItem to compare.
- * @return -1, 0 or 1, depending on how the two items should be sorted.
+ * @param da First FiosItem to compare.
+ * @param db Second FiosItem to compare.
+ * @return True if da < db, as defined in the function.
  */
-int CDECL CompareFiosItems(const FiosItem *da, const FiosItem *db)
+bool CDECL CompareFiosItems(const FiosItem &da, const FiosItem &db)
 {
-	int r = 0;
-
-	if ((_savegame_sort_order & SORT_BY_NAME) == 0 && da->mtime != db->mtime) {
-		r = da->mtime < db->mtime ? -1 : 1;
+	bool r;
+	if ((_savegame_sort_order & SORT_BY_NAME) == 0 && da.mtime != db.mtime) {
+		r = da.mtime < db.mtime;
 	} else {
-		r = strcasecmp(da->title, db->title);
+		r = strcasecmp(da.title, db.title) < 0;
 	}
 
-	if (_savegame_sort_order & SORT_DESCENDING) r = -r;
+	if (_savegame_sort_order & SORT_DESCENDING) r = !r;
 	return r;
 }
 
@@ -397,7 +396,7 @@ static void FiosGetFileList(SaveLoadOperation fop, fios_getlist_callback_proc *c
 	{
 		SortingBits order = _savegame_sort_order;
 		_savegame_sort_order = SORT_BY_NAME | SORT_ASCENDING;
-		QSortT(file_list.files.Begin(), file_list.files.Length(), CompareFiosItems);
+		std::sort(file_list.files.Begin(), file_list.files.End(), CompareFiosItems);
 		_savegame_sort_order = order;
 	}
 
@@ -412,7 +411,7 @@ static void FiosGetFileList(SaveLoadOperation fop, fios_getlist_callback_proc *c
 		scanner.Scan(NULL, subdir, true, true);
 	}
 
-	QSortT(file_list.Get(sort_start), file_list.Length() - sort_start, CompareFiosItems);
+	std::sort(file_list.Get(sort_start), file_list.End(), CompareFiosItems);
 
 	/* Show drives */
 	FiosGetDrives(file_list);

@@ -160,20 +160,20 @@ static inline void GetAllCargoSuffixes(uint cb_offset, CargoSuffixType cst, cons
 IndustryType _sorted_industry_types[NUM_INDUSTRYTYPES]; ///< Industry types sorted by name.
 
 /** Sort industry types by their name. */
-static int CDECL IndustryTypeNameSorter(const IndustryType *a, const IndustryType *b)
+static bool CDECL IndustryTypeNameSorter(const IndustryType &a, const IndustryType &b)
 {
 	static char industry_name[2][64];
 
-	const IndustrySpec *indsp1 = GetIndustrySpec(*a);
+	const IndustrySpec *indsp1 = GetIndustrySpec(a);
 	GetString(industry_name[0], indsp1->name, lastof(industry_name[0]));
 
-	const IndustrySpec *indsp2 = GetIndustrySpec(*b);
+	const IndustrySpec *indsp2 = GetIndustrySpec(b);
 	GetString(industry_name[1], indsp2->name, lastof(industry_name[1]));
 
 	int r = strnatcmp(industry_name[0], industry_name[1]); // Sort by name (natural sorting).
 
 	/* If the names are equal, sort by industry type. */
-	return (r != 0) ? r : (*a - *b);
+	return (r != 0) ? r < 0 : (a < b);
 }
 
 /**
@@ -187,7 +187,7 @@ void SortIndustryTypes()
 	}
 
 	/* Sort industry types by name. */
-	QSortT(_sorted_industry_types, NUM_INDUSTRYTYPES, &IndustryTypeNameSorter);
+	std::sort(std::begin(_sorted_industry_types), std::end(_sorted_industry_types), IndustryTypeNameSorter);
 }
 
 /**
@@ -1194,52 +1194,50 @@ protected:
 	}
 
 	/** Sort industries by name */
-	static int CDECL IndustryNameSorter(const Industry * const *a, const Industry * const *b)
+	static bool CDECL IndustryNameSorter(const Industry * const &a, const Industry * const &b)
 	{
 		static char buf_cache[96];
 		static char buf[96];
 
-		SetDParam(0, (*a)->index);
+		SetDParam(0, a->index);
 		GetString(buf, STR_INDUSTRY_NAME, lastof(buf));
 
-		if (*b != last_industry) {
-			last_industry = *b;
-			SetDParam(0, (*b)->index);
+		if (b != last_industry) {
+			last_industry = b;
+			SetDParam(0, b->index);
 			GetString(buf_cache, STR_INDUSTRY_NAME, lastof(buf_cache));
 		}
 
-		return strnatcmp(buf, buf_cache); // Sort by name (natural sorting).
+		return strnatcmp(buf, buf_cache) < 0; // Sort by name (natural sorting).
 	}
 
 	/** Sort industries by type and name */
-	static int CDECL IndustryTypeSorter(const Industry * const *a, const Industry * const *b)
+	static bool CDECL IndustryTypeSorter(const Industry * const &a, const Industry * const &b)
 	{
 		int it_a = 0;
-		while (it_a != NUM_INDUSTRYTYPES && (*a)->type != _sorted_industry_types[it_a]) it_a++;
+		while (it_a != NUM_INDUSTRYTYPES && a->type != _sorted_industry_types[it_a]) it_a++;
 		int it_b = 0;
-		while (it_b != NUM_INDUSTRYTYPES && (*b)->type != _sorted_industry_types[it_b]) it_b++;
-		int r = it_a - it_b;
-		return (r == 0) ? IndustryNameSorter(a, b) : r;
+		while (it_b != NUM_INDUSTRYTYPES && b->type != _sorted_industry_types[it_b]) it_b++;
+		return (it_a == it_b) ? IndustryNameSorter(a, b) : it_a < it_b;
 	}
 
 	/** Sort industries by production and name */
-	static int CDECL IndustryProductionSorter(const Industry * const *a, const Industry * const *b)
+	static bool CDECL IndustryProductionSorter(const Industry * const &a, const Industry * const &b)
 	{
 		uint prod_a = 0, prod_b = 0;
-		for (uint i = 0; i < lengthof((*a)->produced_cargo); i++) {
-			if ((*a)->produced_cargo[i] != CT_INVALID) prod_a += (*a)->last_month_production[i];
-			if ((*b)->produced_cargo[i] != CT_INVALID) prod_b += (*b)->last_month_production[i];
+		for (uint i = 0; i < lengthof(a->produced_cargo); i++) {
+			if (a->produced_cargo[i] != CT_INVALID) prod_a += a->last_month_production[i];
+			if (b->produced_cargo[i] != CT_INVALID) prod_b += b->last_month_production[i];
 		}
-		int r = prod_a - prod_b;
-
-		return (r == 0) ? IndustryTypeSorter(a, b) : r;
+		return (prod_a == prod_b) ? IndustryTypeSorter(a, b) : prod_a < prod_b;
 	}
 
 	/** Sort industries by transported cargo and name */
-	static int CDECL IndustryTransportedCargoSorter(const Industry * const *a, const Industry * const *b)
+	static bool CDECL IndustryTransportedCargoSorter(const Industry * const &a, const Industry * const &b)
 	{
-		int r = GetCargoTransportedSortValue(*a) - GetCargoTransportedSortValue(*b);
-		return (r == 0) ? IndustryNameSorter(a, b) : r;
+		int va = GetCargoTransportedSortValue(a);
+		int vb = GetCargoTransportedSortValue(b);
+		return (va == vb) ? IndustryNameSorter(a, b) : va < vb;
 	}
 
 	/**

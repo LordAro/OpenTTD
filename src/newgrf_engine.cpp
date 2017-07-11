@@ -1207,19 +1207,19 @@ void AlterVehicleListOrder(EngineID engine, uint target)
  * @param b right side
  * @return comparison result
  */
-static int CDECL EnginePreSort(const EngineID *a, const EngineID *b)
+static bool CDECL EnginePreSort(const EngineID &a, const EngineID &b)
 {
-	const EngineIDMapping *id_a = _engine_mngr.Get(*a);
-	const EngineIDMapping *id_b = _engine_mngr.Get(*b);
+	const EngineIDMapping *id_a = _engine_mngr.Get(a);
+	const EngineIDMapping *id_b = _engine_mngr.Get(b);
 
 	/* 1. Sort by engine type */
-	if (id_a->type != id_b->type) return (int)id_a->type - (int)id_b->type;
+	if (id_a->type != id_b->type) return (int)id_a->type < (int)id_b->type;
 
 	/* 2. Sort by scope-GRFID */
-	if (id_a->grfid != id_b->grfid) return id_a->grfid < id_b->grfid ? -1 : 1;
+	if (id_a->grfid != id_b->grfid) return id_a->grfid < id_b->grfid;
 
 	/* 3. Sort by local ID */
-	return (int)id_a->internal_id - (int)id_b->internal_id;
+	return (int)id_a->internal_id < (int)id_b->internal_id;
 }
 
 /**
@@ -1233,7 +1233,7 @@ void CommitVehicleListOrderChanges()
 	FOR_ALL_ENGINES(e) {
 		*ordering.Append() = e->index;
 	}
-	QSortT(ordering.Begin(), ordering.Length(), EnginePreSort);
+	std::sort(ordering.Begin(), ordering.End(), EnginePreSort);
 
 	/* Apply Insertion-Sort operations */
 	const ListOrderChange *end = _list_order_changes.End();

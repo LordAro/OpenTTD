@@ -12,9 +12,11 @@
 #ifndef SORTLIST_TYPE_H
 #define SORTLIST_TYPE_H
 
+#include <algorithm>
+#include <functional>
+
 #include "core/enum_type.hpp"
 #include "core/bitmath_func.hpp"
-#include "core/sort_func.hpp"
 #include "core/smallvec_type.hpp"
 #include "date_type.h"
 
@@ -49,8 +51,8 @@ struct Filtering {
 template <typename T, typename F = const char*>
 class GUIList : public SmallVector<T, 32> {
 public:
-	typedef int CDECL SortFunction(const T*, const T*); ///< Signature of sort function.
-	typedef bool CDECL FilterFunction(const T*, F);     ///< Signature of filter function.
+	typedef bool CDECL SortFunction(const T&, const T&); ///< Signature of sort function.
+	typedef bool CDECL FilterFunction(const T*, F);      ///< Signature of filter function.
 
 protected:
 	SortFunction * const *sort_func_list;     ///< the sort criteria functions
@@ -265,16 +267,12 @@ public:
 		/* Do not sort when the list is not sortable */
 		if (!this->IsSortable()) return false;
 
-		const bool desc = (this->flags & VL_DESC) != 0;
-
 		if (this->flags & VL_FIRST_SORT) {
 			CLRBITS(this->flags, VL_FIRST_SORT);
-
-			QSortT(this->data, this->items, compare, desc);
-			return true;
 		}
 
-		GSortT(this->data, this->items, compare, desc);
+		std::sort(this->Begin(), this->End(), compare);
+		if ((this->flags & VL_DESC) != 0) std::reverse(this->Begin(), this->End());
 		return true;
 	}
 

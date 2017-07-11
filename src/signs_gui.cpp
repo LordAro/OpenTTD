@@ -72,23 +72,22 @@ struct SignList {
 	}
 
 	/** Sort signs by their name */
-	static int CDECL SignNameSorter(const Sign * const *a, const Sign * const *b)
+	static bool CDECL SignNameSorter(const Sign * const &a, const Sign * const &b)
 	{
 		static char buf_cache[64];
-		char buf[64];
+		static char buf[64];
 
-		SetDParam(0, (*a)->index);
+		SetDParam(0, a->index);
 		GetString(buf, STR_SIGN_NAME, lastof(buf));
 
-		if (*b != last_sign) {
-			last_sign = *b;
-			SetDParam(0, (*b)->index);
+		if (b != SignList::last_sign) {
+			SignList::last_sign = b;
+			SetDParam(0, b->index);
 			GetString(buf_cache, STR_SIGN_NAME, lastof(buf_cache));
 		}
 
 		int r = strnatcmp(buf, buf_cache); // Sort by name (natural sorting).
-
-		return r != 0 ? r : ((*a)->index - (*b)->index);
+		return r != 0 ? r < 0 : a->index < b->index;
 	}
 
 	void SortSignsList()
@@ -96,7 +95,7 @@ struct SignList {
 		if (!this->signs.Sort(&SignNameSorter)) return;
 
 		/* Reset the name sorter sort cache */
-		this->last_sign = NULL;
+		SignList::last_sign = NULL;
 	}
 
 	/** Filter sign list by sign name */

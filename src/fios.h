@@ -144,6 +144,15 @@ public:
 	}
 
 	/**
+	 * Get a pointer behind the last file information.
+	 * @return Address behind the last file information.
+	 */
+	inline FiosItem *End()
+	{
+		return this->files.End();
+	}
+
+	/**
 	 * Get a pointer to the indicated file information. File information must exist.
 	 * @return Address of the indicated existing file information.
 	 */
@@ -219,6 +228,6 @@ void FiosMakeSavegameName(char *buf, const char *name, const char *last);
 
 FiosType FiosGetSavegameListCallback(SaveLoadOperation fop, const char *file, const char *ext, char *title, const char *last);
 
-int CDECL CompareFiosItems(const FiosItem *a, const FiosItem *b);
+bool CDECL CompareFiosItems(const FiosItem &a, const FiosItem &b);
 
 #endif /* FIOS_H */

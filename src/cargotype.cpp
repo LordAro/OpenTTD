@@ -10,11 +10,13 @@
 /** @file cargotype.cpp Implementation of cargoes. */
 
 #include "stdafx.h"
+
+#include <algorithm>
+
 #include "cargotype.h"
 #include "newgrf_cargo.h"
 #include "string_func.h"
 #include "strings_func.h"
-#include "core/sort_func.hpp"
 
 #include "table/sprites.h"
 #include "table/strings.h"
@@ -138,35 +140,28 @@ uint8 _sorted_standard_cargo_specs_size;         ///< Number of standard cargo s
 
 
 /** Sort cargo specifications by their name. */
-static int CDECL CargoSpecNameSorter(const CargoSpec * const *a, const CargoSpec * const *b)
+static bool CDECL CargoSpecNameSorter(const CargoSpec * const &a, const CargoSpec * const &b)
 {
 	static char a_name[64];
 	static char b_name[64];
 
-	GetString(a_name, (*a)->name, lastof(a_name));
-	GetString(b_name, (*b)->name, lastof(b_name));
+	GetString(a_name, a->name, lastof(a_name));
+	GetString(b_name, b->name, lastof(b_name));
 
 	int res = strnatcmp(a_name, b_name); // Sort by name (natural sorting).
 
 	/* If the names are equal, sort by cargo bitnum. */
-	return (res != 0) ? res : ((*a)->bitnum - (*b)->bitnum);
+	return (res != 0) ? res < 0 : (a->bitnum < b->bitnum);
 }
 
 /** Sort cargo specifications by their cargo class. */
-static int CDECL CargoSpecClassSorter(const CargoSpec * const *a, const CargoSpec * const *b)
+static bool CDECL CargoSpecClassSorter(const CargoSpec * const &a, const CargoSpec * const &b)
 {
-	int res = ((*b)->classes & CC_PASSENGERS) - ((*a)->classes & CC_PASSENGERS);
-	if (res == 0) {
-		res = ((*b)->classes & CC_MAIL) - ((*a)->classes & CC_MAIL);
-		if (res == 0) {
-			res = ((*a)->classes & CC_SPECIAL) - ((*b)->classes & CC_SPECIAL);
-			if (res == 0) {
-				return CargoSpecNameSorter(a, b);
-			}
-		}
-	}
-
-	return res;
+	int r = (b->classes & CC_PASSENGERS) - (a->classes & CC_PASSENGERS);
+	if (r == 0) r = (b->classes & CC_MAIL) - (a->classes & CC_MAIL);
+	if (r == 0) r = (a->classes & CC_SPECIAL) - (b->classes & CC_SPECIAL);
+	if (r == 0) return CargoSpecNameSorter(a, b);
+	return r < 0;
 }
 
 /** Initialize the list of sorted cargo specifications. */
@@ -181,7 +176,7 @@ void InitializeSortedCargoSpecs()
 	}
 
 	/* Sort cargo specifications by cargo class and name. */
-	QSortT(_sorted_cargo_specs, _sorted_cargo_specs_size, &CargoSpecClassSorter);
+	std::sort(_sorted_cargo_specs, _sorted_cargo_specs + _sorted_cargo_specs_size, &CargoSpecClassSorter);
 
 	_standard_cargo_mask = 0;
 

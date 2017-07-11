@@ -2051,10 +2051,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\..\src\core\sort_func.hpp"
-				>
-			</File>
-			<File
 				RelativePath=".\..\src\core\string_compare_type.hpp"
 				>
 			</File>
