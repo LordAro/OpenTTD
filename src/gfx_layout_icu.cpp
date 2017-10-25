@@ -195,3 +195,31 @@ public:
 	}
 };
 
+static ParagraphLayouter *GetParagraphLayout(UChar *buff, UChar *buff_end, FontMap &fontMapping)
+{
+	int32 length = buff_end - buff;
+
+	if (length == 0) {
+		/* ICU's ParagraphLayout cannot handle empty strings, so fake one. */
+		buff[0] = ' ';
+		length = 1;
+		fontMapping.End()[-1].first++;
+	}
+
+	/* Fill ICU's FontRuns with the right data. */
+	FontRuns runs(fontMapping.Length());
+	for (FontMap::iterator iter = fontMapping.Begin(); iter != fontMapping.End(); iter++) {
+		runs.add(iter->second, iter->first);
+	}
+
+	LEErrorCode status = LE_NO_ERROR;
+	/* ParagraphLayout does not copy "buff", so it must stay valid.
+	 * "runs" is copied according to the ICU source, but the documentation does not specify anything, so this might break somewhen. */
+	ParagraphLayout *p = new ParagraphLayout(buff, length, &runs, NULL, NULL, NULL, _current_text_dir == TD_RTL ? UBIDI_DEFAULT_RTL : UBIDI_DEFAULT_LTR, false, status);
+	if (status != LE_NO_ERROR) {
+		delete p;
+		return NULL;
+	}
+
+	return new ICUParagraphLayout(p);
+}

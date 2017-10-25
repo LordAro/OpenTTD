@@ -17,11 +17,7 @@
 
 #include "table/control_codes.h"
 
-#include <unicode/ustring.h>
-#include <layout/ParagraphLayout.h>
-
 #include "safeguards.h"
-
 
 
 /* static */ Font *Font::Create(FontSize size, TextColour colour)
