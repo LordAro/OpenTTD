@@ -87,6 +87,7 @@ set_default() {
 	with_fontconfig="1"
 	with_icu_sort="1"
 	static_icu="0"
+	with_pango="1"
 	with_psp_config="1"
 	with_threads="1"
 	with_distcc="1"
@@ -163,6 +164,7 @@ set_default() {
 		with_fontconfig
 		with_icu_sort
 		static_icu
+		with_pango
 		with_psp_config
 		with_threads
 		with_distcc
@@ -400,6 +402,13 @@ detect_params() {
 			--static-icu=*)               static_icu="$optarg";;
 			--static-libicu)              static_icu="1";;
 			--static-libicu=*)            static_icu="$optarg";;
+
+			--with-pango)                 with_pango="2";;
+			--without-pango)              with_pango="0";;
+			--with-pango=*)               with_pango="$optarg";;
+			--with-libpango)              with_pango="2";;
+			--without-libpango)           with_pango="0";;
+			--with-libpango=*)            with_pango="$optarg";;
 
 			--with-psp-config)            with_psp_config="2";;
 			--without-psp-config)         with_psp_config="0";;
@@ -872,6 +881,7 @@ check_params() {
 	detect_freetype
 	detect_fontconfig
 	detect_icu_sort
+	detect_pango
 	detect_pspconfig
 	detect_libtimidity
 
@@ -1783,6 +1793,16 @@ make_cflags_and_ldflags() {
 		fi
 	fi
 
+	if [ -n "$pango_config" ]; then
+		CFLAGS="$CFLAGS -DWITH_PANGO"
+		CFLAGS="$CFLAGS `$pango_config --cflags | tr '\n\r' '  '`"
+
+		if [ "$enable_static" != "0" ]; then
+			LIBS="$LIBS `$pango_config --libs --static | tr '\n\r' '  '`"
+		else
+			LIBS="$LIBS `$pango_config --libs | tr '\n\r' '  '`"
+		fi
+	fi
 
 	if [ "$with_direct_music" != "0" ]; then
 		CFLAGS="$CFLAGS -DWIN32_ENABLE_DIRECTMUSIC_SUPPORT"
@@ -2801,6 +2821,10 @@ detect_icu_sort() {
 	detect_pkg_config "$with_icu_sort" "icu-i18n" "icu_sort_config" "4.8" "1"
 }
 
+detect_pango() {
+	detect_pkg_config "$with_pango" "pango" "pango_config" "1.30" "1"
+}
+
 detect_pspconfig() {
 	# 0 means no, 1 is auto-detect, 2 is force
 	if [ "$with_psp_config" = "0" ]; then
@@ -3536,6 +3560,8 @@ showhelp() {
 	echo "                                 enables icu components for locale specific string sorting"
 	echo "  --static-icu                   try to link statically (libsicu instead of"
 	echo "                                 libicu; can fail as the new name is guessed)"
+	echo "  --with-pango[=\"pkg-config pango\"]"
+	echo "                                 enables pango for layouting (right-to-left support)"
 	echo "  --with-iconv[=iconv-path]      enables iconv support"
 	echo "  --with-psp-config[=psp-config] enables psp-config support (PSP ONLY)"
 	echo "  --disable-builtin-depend       disable use of builtin deps finder"
