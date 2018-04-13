@@ -2130,7 +2130,6 @@ void CheckForMissingGlyphs(bool base_font, MissingGlyphSearcher *searcher)
 	/* Update the font with cache */
 	LoadStringWidthTable(searcher->Monospace());
 
-#if !defined(WITH_ICU_LAYOUT)
 	/*
 	 * For right-to-left languages we need the ICU library. If
 	 * we do not have support for that library we warn the user
@@ -2150,5 +2149,4 @@ void CheckForMissingGlyphs(bool base_font, MissingGlyphSearcher *searcher)
 		SetDParamStr(0, err_str);
 		ShowErrorMessage(STR_JUST_RAW_STRING, INVALID_STRING_ID, WL_ERROR);
 	}
-#endif /* !WITH_ICU_LAYOUT */
 }
