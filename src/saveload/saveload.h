@@ -1022,24 +1022,9 @@ size_t SlCalcObjLength(const void *object, const SaveLoad *sld);
 byte SlReadByte();
 void SlWriteByte(byte b);
 
-static inline int SlReadUint16()
-{
-	int x = SlReadByte() << 8;
-	return x | SlReadByte();
-}
-
-static inline uint32 SlReadUint32()
-{
-	uint32 x = SlReadUint16() << 16;
-	return x | SlReadUint16();
-}
-
-static inline uint64 SlReadUint64()
-{
-	uint32 x = SlReadUint32();
-	uint32 y = SlReadUint32();
-	return (uint64)x << 32 | y;
-}
+int SlReadUint16();
+uint32 SlReadUint32();
+uint64 SlReadUint64();
 
 static inline void SlWriteUint16(uint16 v)
 {
@@ -1072,15 +1057,7 @@ void NORETURN SlErrorCorruptFmt(const char *format, ...) WARN_FORMAT(1, 2);
 
 bool SaveloadCrashWithMissingNewGRFs();
 
-/**
- * Read in bytes from the file/data structure but don't do
- * anything with them, discarding them in effect
- * @param length The amount of bytes that is being treated this way
- */
-static inline void SlSkipBytes(size_t length)
-{
-	for (; length != 0; length--) SlReadByte();
-}
+void SlSkipBytes(size_t length);
 
 extern char _savegame_format[8];
 extern bool _do_autosave;
