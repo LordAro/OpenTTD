@@ -31,6 +31,7 @@ add_files(
     order_sl.cpp
     saveload.cpp
     saveload.h
+    saveload_buffer.h
     saveload_filter.h
     saveload_internal.h
     signs_sl.cpp
