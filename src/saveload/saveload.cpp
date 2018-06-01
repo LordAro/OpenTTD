@@ -1815,6 +1815,9 @@ static void SlSaveChunk(const ChunkHandler *ch)
 	SlWriteUint32(ch->id);
 	DEBUG(sl, 2, "Saving chunk %c%c%c%c", ch->id >> 24, ch->id >> 16, ch->id >> 8, ch->id);
 
+	size_t written = 0;
+	if (_debug_sl_level >= 3) written = SlGetBytesWritten();
+
 	_sl.block_mode = ch->flags & CH_TYPE_MASK;
 	switch (ch->flags & CH_TYPE_MASK) {
 		case CH_RIFF:
@@ -1834,6 +1837,8 @@ static void SlSaveChunk(const ChunkHandler *ch)
 			break;
 		default: NOT_REACHED();
 	}
+
+	DEBUG(sl, 3, "Saved chunk %c%c%c%c (" PRINTF_SIZE " bytes)", ch->id >> 24, ch->id >> 16, ch->id >> 8, ch->id, SlGetBytesWritten() - written);
 }
 
 /** Save all chunks */
@@ -1867,6 +1872,8 @@ static void SlLoadChunks()
 
 	for (id = SlReadUint32(); id != 0; id = SlReadUint32()) {
 		DEBUG(sl, 2, "Loading chunk %c%c%c%c", id >> 24, id >> 16, id >> 8, id);
+		size_t read = 0;
+		if (_debug_sl_level >= 3) read = SlGetBytesRead();
 
 		ch = SlFindChunkHandler(id);
 		if (ch == nullptr) {
@@ -1879,6 +1886,7 @@ static void SlLoadChunks()
 		} else {
 			SlLoadChunk(ch);
 		}
+		DEBUG(sl, 3, "Loaded chunk %c%c%c%c (" PRINTF_SIZE " bytes)", id >> 24, id >> 16, id >> 8, id, SlGetBytesRead() - read);
 	}
 }
 
@@ -1890,10 +1898,13 @@ static void SlLoadCheckChunks()
 
 	for (id = SlReadUint32(); id != 0; id = SlReadUint32()) {
 		DEBUG(sl, 2, "Loading chunk %c%c%c%c", id >> 24, id >> 16, id >> 8, id);
+		size_t read = 0;
+		if (_debug_sl_level >= 3) read = SlGetBytesRead();
 
 		ch = SlFindChunkHandler(id);
 		if (ch == nullptr && !SlXvIsChunkDiscardable(id)) SlErrorCorrupt("Unknown chunk type");
 		SlLoadCheckChunk(ch);
+		DEBUG(sl, 3, "Loaded chunk %c%c%c%c (" PRINTF_SIZE " bytes)", id >> 24, id >> 16, id >> 8, id, SlGetBytesRead() - read);
 	}
 }
 
