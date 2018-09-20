@@ -17,6 +17,10 @@ function (FindVersion)
         return ()
     endif ()
 
+    # Make sure LC_ALL is set to something desirable
+    set(SAVED_LC_ALL "$ENV{LC_ALL}")
+    set(ENV{LC_ALL} C)
+
     # Refresh the index to make sure file stat info is in sync, then look for modifications
     execute_process(COMMAND ${GIT_EXECUTABLE} update-index --refresh
                     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -90,4 +94,6 @@ function (FindVersion)
 
     set(CFG_VERSION "${VERSION}" PARENT_SCOPE)
 
+    # Restore
+    set(ENV{LC_ALL} "${SAVED_LC_ALL}")
 endfunction (FindVersion)
