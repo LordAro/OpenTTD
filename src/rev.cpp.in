@@ -37,7 +37,7 @@ bool IsReleasedVersion()
  *
  * <modified> shows a "M", if the binary is made from modified source code.
  */
-const char _openttd_revision[] = "!!VERSION!!";
+const char _openttd_revision[] = "${CFG_VERSION}";
 
 /**
  * The text version of OpenTTD's build date.
@@ -55,7 +55,7 @@ const char _openttd_build_date[] = __DATE__ " " __TIME__;
  * (compiling from sources without any version control software)
  * and 2 is for modified revision.
  */
-const byte _openttd_revision_modified = !!MODIFIED!!;
+const byte _openttd_revision_modified = ${CFG_MODIFIED};
 
 /**
  * The NewGRF revision of OTTD:
@@ -76,5 +76,5 @@ const uint32 _openttd_newgrf_version = 1 << 28 | 9 << 24 | 0 << 20 | 0 << 19;
 /**
  * Variable used by MorphOS to show the version.
  */
-extern const char morphos_versions_tag[] = "$VER: OpenTTD !!VERSION!! (!!DATE!!) OpenTTD Team [MorphOS, PowerPC]";
+extern const char morphos_versions_tag[] = "$VER: OpenTTD ${CFG_VERSION} (${CFG_DATE}) OpenTTD Team [MorphOS, PowerPC]";
 #endif

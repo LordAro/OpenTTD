@@ -4,6 +4,9 @@ if (${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
     message(FATAL_ERROR "In-source builds not allowed. Please run \"cmake ..\" from the bin directory")
 endif (${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
 
+include(${CMAKE_SOURCE_DIR}/CMake/FindVersion.cmake)
+#set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMake") # Probably going to be needed at some point
+
 project(OpenTTD)
 
 # Ensure we are at least C++11 compatible
@@ -110,6 +113,21 @@ foreach (FILE IN LISTS SOURCE_LIST)
     list(APPEND SOURCE_FILES ${CMAKE_SOURCE_DIR}/src/${FILE})
 endforeach(FILE)
 
+FindVersion()
+string(TIMESTAMP CFG_DATE "%d.%m.%y" UTC) # TODO this is at "configure" time, not at make time
+
+message(STATUS "Version string: ${CFG_VERSION}")
+message(STATUS "Generating src/rev.cpp")
+configure_file("${CMAKE_SOURCE_DIR}/src/rev.cpp.in" "${CMAKE_SOURCE_DIR}/src/rev.cpp")
+list(APPEND SOURCE_FILES "${CMAKE_SOURCE_DIR}/src/rev.cpp")
+set_source_files_properties("${CMAKE_SOURCE_DIR}/src/rev.cpp" GENERATED)
+
+if (WIN32) # TODO: Windows only?
+configure_file("${CMAKE_SOURCE_DIR}/src/os/windows/ottdres.rc.in" "${CMAKE_SOURCE_DIR}/src/os/windows/ottdres.rc")
+list(APPEND SOURCE_FILES "${CMAKE_SOURCE_DIR}/src/os/windows/ottdres.rc")
+set_source_files_properties("${CMAKE_SOURCE_DIR}/src/os/windows/ottdres.rc" GENERATED)
+endif (WIN32)
+
 include(TestBigEndian)
 TEST_BIG_ENDIAN(IS_BIG_ENDIAN)
 if (IS_BIG_ENDIAN)
@@ -117,8 +135,6 @@ if (IS_BIG_ENDIAN)
 else (IS_BIG_ENDIAN)
     add_compile_definitions(TTD_ENDIAN=TTD_LITTLE_ENDIAN)
 endif (IS_BIG_ENDIAN)
-#list(APPEND SOURCE_FILES ${CMAKE_BINARY_DIR}/generated/rev.cpp)
-#include_directories(${CMAKE_SOURCE_DIR}/src)
 
 # Defines
 add_compile_definitions(GLOBAL_DATA_DIR="${CMAKE_INSTALL_PREFIX}/${OPTION_DATA_DIR}")
