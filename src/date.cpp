@@ -21,6 +21,10 @@
 #include "linkgraph/linkgraph.h"
 #include "saveload/saveload.h"
 
+#include <vector>
+#include "signs_base.h"
+#include "viewport_func.h"
+
 #include "safeguards.h"
 
 Year      _cur_year;   ///< Current year, starting at 0
@@ -269,7 +273,23 @@ void IncreaseDate()
 	/* increase day, and check if a new day is there? */
 	_tick_counter++;
 
-	if (_game_mode == GM_MENU) return;
+	if (_game_mode == GM_MENU) {
+		if (_tick_counter % (DAY_TICKS * 3) == 0) {
+			std::vector<Sign *> cmdsigns;
+			Sign *si;
+			FOR_ALL_SIGNS(si) {
+				if (strncmp(si->name, "THISISASIGN", sizeof("THISISASIGN")) == 0) {
+					cmdsigns.push_back(si);
+				}
+			}
+			if (!cmdsigns.empty()) {
+				Sign *new_pos = cmdsigns[RandomRange(cmdsigns.size())];
+				ScrollMainWindowToTile(TileVirtXY(new_pos->x, new_pos->y), true);
+				MarkWholeScreenDirty();
+			}
+		}
+		return;
+	}
 
 	_date_fract++;
 	if (_date_fract < DAY_TICKS) return;
