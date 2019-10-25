@@ -2549,6 +2549,8 @@ public:
 			this->SetWidgetDisabledState(WID_VV_FORCE_PROCEED, !is_localcompany);
 			this->SetWidgetDisabledState(WID_VV_TURN_AROUND, !is_localcompany);
 		}
+		static const Colours breakdown_cols[] = {COLOUR_GREY, COLOUR_CREAM, COLOUR_YELLOW, COLOUR_ORANGE, COLOUR_PINK, COLOUR_RED};
+		this->GetWidget<NWidgetCore>(WID_VV_GOTO_DEPOT)->colour = breakdown_cols[Clamp(v->breakdowns_since_last_service, 0, lengthof(breakdown_cols) - 1)];
 
 		this->DrawWidgets();
 	}
