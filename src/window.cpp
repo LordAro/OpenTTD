@@ -1042,8 +1042,8 @@ void Window::SetShaded(bool make_shaded)
 			this->ReInit(0, -this->height);
 		} else {
 			this->shade_select->SetDisplayedPlane(desired);
-			int dx = ((int)this->unshaded_size.width  > this->width)  ? (int)this->unshaded_size.width  - this->width  : 0;
-			int dy = ((int)this->unshaded_size.height > this->height) ? (int)this->unshaded_size.height - this->height : 0;
+			int dx = UnderflowSafeSub(this->unshaded_size.width, this->width);
+			int dy = UnderflowSafeSub(this->unshaded_size.height, this->height);
 			this->ReInit(dx, dy);
 		}
 	}
@@ -2434,8 +2434,8 @@ static void HandleScrollbarScrolling(Window *w)
 	}
 
 	/* Find the item we want to move to and make sure it's inside bounds. */
-	int pos = std::min(RoundDivSU(std::max(0, i + _scrollbar_start_pos) * sb->GetCount(), _scrollbar_size), std::max(0, sb->GetCount() - sb->GetCapacity()));
-	if (rtl) pos = std::max(0, sb->GetCount() - sb->GetCapacity() - pos);
+	uint pos = std::min<uint>(RoundDivSU(std::max(0, i + _scrollbar_start_pos) * sb->GetCount(), _scrollbar_size), UnderflowSafeSub(sb->GetCount(), sb->GetCapacity()));
+	if (rtl) pos = UnderflowSafeSub(sb->GetCount(), sb->GetCapacity() + pos);
 	if (pos != sb->GetPosition()) {
 		sb->SetPosition(pos);
 		w->SetDirty();

@@ -393,7 +393,7 @@ struct NewGRFInspectWindow : Window {
 	 * @param offset The offset (in lines) we want to draw for
 	 * @param format The format string
 	 */
-	void WARN_FORMAT(4, 5) DrawString(const Rect &r, int offset, const char *format, ...) const
+	void WARN_FORMAT(4, 5) DrawString(const Rect &r, uint offset, const char *format, ...) const
 	{
 		char buf[1024];
 
@@ -402,8 +402,10 @@ struct NewGRFInspectWindow : Window {
 		vseprintf(buf, lastof(buf), format, va);
 		va_end(va);
 
+		/* Ensure the offset is within the vscroll range */
+		if (offset < this->vscroll->GetPosition()) return;
+		if (offset >= this->vscroll->GetPosition() + this->vscroll->GetCapacity()) return;
 		offset -= this->vscroll->GetPosition();
-		if (offset < 0 || offset >= this->vscroll->GetCapacity()) return;
 
 		::DrawString(r.left + LEFT_OFFSET, r.right - RIGHT_OFFSET, r.top + TOP_OFFSET + (offset * this->resize.step_height), buf, TC_BLACK);
 	}
@@ -1017,7 +1019,7 @@ struct SpriteAlignerWindow : Window {
 		if (data == 1) {
 			/* Sprite picker finished */
 			this->RaiseWidget(WID_SA_PICKER);
-			this->vscroll->SetCount((uint)_newgrf_debug_sprite_picker.sprites.size());
+			this->vscroll->SetCount(_newgrf_debug_sprite_picker.sprites.size());
 		}
 	}
 

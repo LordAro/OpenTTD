@@ -41,11 +41,11 @@ public:
 	 * @api -all
 	 */
 	struct LogData {
-		char **lines;           ///< The log-lines.
+		char **lines; ///< The log-lines.
 		ScriptLog::ScriptLogType *type; ///< Per line, which type of log it was.
-		int count;              ///< Total amount of log-lines possible.
-		int pos;                ///< Current position in lines.
-		int used;               ///< Total amount of used log-lines.
+		uint count;   ///< Total amount of log-lines possible.
+		uint pos;     ///< Current position in lines.
+		uint used;    ///< Total amount of used log-lines.
 	};
 
 	/**

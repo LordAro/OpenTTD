@@ -82,7 +82,7 @@
 {
 	LogData *log = (LogData *)ScriptObject::GetLogPointer();
 
-	for (int i = 0; i < log->count; i++) {
+	for (uint i = 0; i < log->count; i++) {
 		free(log->lines[i]);
 	}
 

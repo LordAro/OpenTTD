@@ -597,7 +597,7 @@ struct NewGRFWindow : public Window, NewGRFScanCallback {
 
 	GUIGRFConfigList avails;    ///< Available (non-active) grfs.
 	const GRFConfig *avail_sel; ///< Currently selected available grf. \c nullptr is none is selected.
-	int avail_pos;              ///< Index of #avail_sel if existing, else \c -1.
+	uint avail_pos;             ///< Index of #avail_sel if existing, else \c UINT_MAX.
 	StringFilter string_filter; ///< Filter for available grf.
 	QueryString filter_editbox; ///< Filter editbox;
 
@@ -619,7 +619,7 @@ struct NewGRFWindow : public Window, NewGRFScanCallback {
 	NewGRFWindow(WindowDesc *desc, bool editable, bool show_params, bool execute, GRFConfig **orig_list) : Window(desc), filter_editbox(EDITBOX_MAX_SIZE)
 	{
 		this->avail_sel   = nullptr;
-		this->avail_pos   = -1;
+		this->avail_pos   = UINT_MAX;
 		this->active_sel  = nullptr;
 		this->actives     = nullptr;
 		this->orig_list   = orig_list;
@@ -1007,7 +1007,7 @@ struct NewGRFWindow : public Window, NewGRFScanCallback {
 				}
 				this->active_sel = c;
 				this->avail_sel = nullptr;
-				this->avail_pos = -1;
+				this->avail_pos = UINT_MAX;
 
 				this->InvalidateData();
 				if (click_count == 1) {
@@ -1042,7 +1042,7 @@ struct NewGRFWindow : public Window, NewGRFScanCallback {
 
 				this->active_sel = newsel;
 				this->preset = -1;
-				this->avail_pos = -1;
+				this->avail_pos = UINT_MAX;
 				this->avail_sel = nullptr;
 				this->avails.ForceRebuild();
 				this->InvalidateData(GOID_NEWGRF_LIST_EDITED);
@@ -1136,7 +1136,7 @@ struct NewGRFWindow : public Window, NewGRFScanCallback {
 	{
 		if (this->active_sel == nullptr) DeleteWindowByClass(WC_TEXTFILE);
 		this->avail_sel = nullptr;
-		this->avail_pos = -1;
+		this->avail_pos = UINT_MAX;
 		this->avails.ForceRebuild();
 		this->DeleteChildWindows(WC_QUERY_STRING); // Remove the parameter query window
 	}
@@ -1223,7 +1223,7 @@ struct NewGRFWindow : public Window, NewGRFScanCallback {
 
 				this->vscroll->SetCount(i + 1); // Reserve empty space for drag and drop handling.
 
-				if (this->avail_pos >= 0) this->vscroll2->ScrollTowards(this->avail_pos);
+				if (this->avail_pos != UINT_MAX) this->vscroll2->ScrollTowards(this->avail_pos);
 				break;
 			}
 		}
@@ -1301,17 +1301,17 @@ struct NewGRFWindow : public Window, NewGRFScanCallback {
 
 			case WKC_DOWN:
 				/* scroll down by one */
-				if (this->avail_pos < (int)this->avails.size() - 1) this->avail_pos++;
+				if (!this->avails.empty() && this->avail_pos < this->avails.size() - 1) this->avail_pos++;
 				break;
 
 			case WKC_PAGEUP:
 				/* scroll up a page */
-				this->avail_pos = (this->avail_pos < this->vscroll2->GetCapacity()) ? 0 : this->avail_pos - this->vscroll2->GetCapacity();
+				this->avail_pos = UnderflowSafeSub(this->avail_pos, this->vscroll2->GetCapacity());
 				break;
 
 			case WKC_PAGEDOWN:
 				/* scroll down a page */
-				this->avail_pos = std::min(this->avail_pos + this->vscroll2->GetCapacity(), (int)this->avails.size() - 1);
+				this->avail_pos = std::min<uint>(this->avail_pos + this->vscroll2->GetCapacity(), this->avails.size() - 1);
 				break;
 
 			case WKC_HOME:
@@ -1321,15 +1321,15 @@ struct NewGRFWindow : public Window, NewGRFScanCallback {
 
 			case WKC_END:
 				/* jump to end */
-				this->avail_pos = (uint)this->avails.size() - 1;
+				this->avail_pos = this->avails.empty() ? 0 : this->avails.size() - 1;
 				break;
 
 			default:
 				return ES_NOT_HANDLED;
 		}
 
-		if (this->avails.size() == 0) this->avail_pos = -1;
-		if (this->avail_pos >= 0) {
+		if (this->avails.size() == 0) this->avail_pos = UINT_MAX;
+		if (this->avail_pos != UINT_MAX) {
 			this->active_sel = nullptr;
 			DeleteWindowByClass(WC_GRF_PARAMETERS);
 			if (this->avail_sel != this->avails[this->avail_pos]) DeleteWindowByClass(WC_TEXTFILE);
@@ -1363,7 +1363,7 @@ struct NewGRFWindow : public Window, NewGRFScanCallback {
 				for (from_prev = &this->actives; *from_prev != this->active_sel; from_prev = &(*from_prev)->next, from_pos++) {}
 
 				/* Gets the drag-and-drop destination offset. Ignore the last dummy line. */
-				int to_pos = std::min(this->vscroll->GetScrolledRowFromWidget(pt.y, this, WID_NS_FILE_LIST), this->vscroll->GetCount() - 2);
+				int to_pos = std::min<int>(this->vscroll->GetScrolledRowFromWidget(pt.y, this, WID_NS_FILE_LIST), this->vscroll->GetCount() - 2);
 				if (to_pos != from_pos) { // Don't move NewGRF file over itself.
 					/* Get pointer to destination position. */
 					GRFConfig **to_prev = &this->actives;
@@ -1381,7 +1381,7 @@ struct NewGRFWindow : public Window, NewGRFScanCallback {
 					this->InvalidateData();
 				}
 			} else if (this->avail_sel != nullptr) {
-				int to_pos = std::min(this->vscroll->GetScrolledRowFromWidget(pt.y, this, WID_NS_FILE_LIST), this->vscroll->GetCount() - 1);
+				int to_pos = std::min<int>(this->vscroll->GetScrolledRowFromWidget(pt.y, this, WID_NS_FILE_LIST), this->vscroll->GetCount() - 1);
 				this->AddGRFToActive(to_pos);
 			}
 		} else if (widget == WID_NS_AVAIL_LIST && this->active_sel != nullptr) {
@@ -1407,7 +1407,7 @@ struct NewGRFWindow : public Window, NewGRFScanCallback {
 			/* An NewGRF file is dragged over the active list. */
 			int to_pos = this->vscroll->GetScrolledRowFromWidget(pt.y, this, WID_NS_FILE_LIST);
 			/* Skip the last dummy line if the source is from the active list. */
-			to_pos = std::min(to_pos, this->vscroll->GetCount() - (this->active_sel != nullptr ? 2 : 1));
+			to_pos = std::min<int>(to_pos, this->vscroll->GetCount() - (this->active_sel != nullptr ? 2 : 1));
 
 			if (to_pos != this->active_over) {
 				this->active_over = to_pos;
@@ -1479,13 +1479,16 @@ private:
 		this->avails.Sort();
 
 		if (this->avail_sel != nullptr) {
-			this->avail_pos = find_index(this->avails, this->avail_sel);
-			if (this->avail_pos == -1) {
+			auto const it = std::find(this->avails.begin(), this->avails.end(), this->avail_sel);
+			if (it != this->avails.end()) {
+				this->avail_pos = it - this->avails.begin();
+			} else {
+				this->avail_pos = UINT_MAX;
 				this->avail_sel = nullptr;
 			}
 		}
 
-		this->vscroll2->SetCount((uint)this->avails.size()); // Update the scrollbar
+		this->vscroll2->SetCount(this->avails.size()); // Update the scrollbar
 	}
 
 	/**
@@ -1525,10 +1528,10 @@ private:
 		*entry = c;
 
 		/* Select next (or previous, if last one) item in the list. */
-		int new_pos = this->avail_pos + 1;
-		if (new_pos >= (int)this->avails.size()) new_pos = this->avail_pos - 1;
+		uint new_pos = this->avail_pos + 1;
+		if (new_pos >= this->avails.size()) new_pos = this->avail_pos - 1;
 		this->avail_pos = new_pos;
-		if (new_pos >= 0) this->avail_sel = this->avails[new_pos];
+		if (new_pos != UINT_MAX) this->avail_sel = this->avails[new_pos];
 
 		this->avails.ForceRebuild();
 		this->InvalidateData(GOID_NEWGRF_LIST_EDITED);
@@ -2060,7 +2063,7 @@ struct SavePresetWindow : public Window {
 		this->vscroll = this->GetScrollbar(WID_SVP_SCROLLBAR);
 		this->FinishInitNested(0);
 
-		this->vscroll->SetCount((uint)this->presets.size());
+		this->vscroll->SetCount(this->presets.size());
 		this->SetFocusedWidget(WID_SVP_EDITBOX);
 		if (initial_text != nullptr) this->presetname_editbox.text.Assign(initial_text);
 	}

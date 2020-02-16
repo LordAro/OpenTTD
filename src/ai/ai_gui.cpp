@@ -80,7 +80,7 @@ struct AIListWindow : public Window {
 		this->vscroll = this->GetScrollbar(WID_AIL_SCROLLBAR);
 		this->FinishInitNested(); // Initializes 'this->line_height' as side effect.
 
-		this->vscroll->SetCount((int)this->info_list->size() + 1);
+		this->vscroll->SetCount(this->info_list->size() + 1);
 
 		/* Try if we can find the currently selected AI */
 		this->selected = -1;
@@ -233,10 +233,10 @@ struct AIListWindow : public Window {
 
 		if (!gui_scope) return;
 
-		this->vscroll->SetCount((int)this->info_list->size() + 1);
+		this->vscroll->SetCount(this->info_list->size() + 1);
 
 		/* selected goes from -1 .. length of ai list - 1. */
-		this->selected = std::min(this->selected, this->vscroll->GetCount() - 2);
+		this->selected = std::min<int>(this->selected, this->vscroll->GetCount() - 2);
 	}
 };
 
@@ -343,7 +343,7 @@ struct AISettingsWindow : public Window {
 			}
 		}
 
-		this->vscroll->SetCount((int)this->visible_settings.size());
+		this->vscroll->SetCount(this->visible_settings.size());
 	}
 
 	void UpdateWidgetSize(int widget, Dimension *size, const Dimension &padding, Dimension *fill, Dimension *resize) override
@@ -1006,7 +1006,7 @@ struct AIDebugWindow : public Window {
 
 	static CompanyID ai_debug_company;                     ///< The AI that is (was last) being debugged.
 	int redraw_timer;                                      ///< Timer for redrawing the window, otherwise it'll happen every tick.
-	int last_vscroll_pos;                                  ///< Last position of the scrolling.
+	uint last_vscroll_pos;                                 ///< Last position of the scrolling.
 	bool autoscroll;                                       ///< Whether automatically scrolling should be enabled or not.
 	bool show_break_box;                                   ///< Whether the break/debug box is visible.
 	static bool break_check_enabled;                       ///< Stop an AI when it prints a matching string
@@ -1014,7 +1014,7 @@ struct AIDebugWindow : public Window {
 	QueryString break_editbox;                             ///< Break editbox
 	static StringFilter break_string_filter;               ///< Log filter for break.
 	static bool case_sensitive_break_check;                ///< Is the matching done case-sensitive
-	int highlight_row;                                     ///< The output row that matches the given string, or -1
+	uint highlight_row;                                    ///< The output row that matches the given string, or UINT_MAX
 	Scrollbar *vscroll;                                    ///< Cache of the vertical scrollbar.
 
 	ScriptLog::LogData *GetLogPointer() const
@@ -1089,7 +1089,7 @@ struct AIDebugWindow : public Window {
 
 		this->last_vscroll_pos = 0;
 		this->autoscroll = true;
-		this->highlight_row = -1;
+		this->highlight_row = UINT_MAX;
 
 		this->querystrings[WID_AID_BREAK_STR_EDIT_BOX] = &this->break_editbox;
 
@@ -1160,7 +1160,7 @@ struct AIDebugWindow : public Window {
 
 		ScriptLog::LogData *log = this->GetLogPointer();
 
-		int scroll_count = (log == nullptr) ? 0 : log->used;
+		uint scroll_count = (log == nullptr) ? 0 : log->used;
 		if (this->vscroll->GetCount() != scroll_count) {
 			this->vscroll->SetCount(scroll_count);
 
@@ -1176,7 +1176,7 @@ struct AIDebugWindow : public Window {
 			this->autoscroll = this->vscroll->GetPosition() >= log->used - this->vscroll->GetCapacity();
 		}
 		if (this->autoscroll) {
-			int scroll_pos = std::max(0, log->used - this->vscroll->GetCapacity());
+			uint scroll_pos = UnderflowSafeSub(log->used, this->vscroll->GetCapacity());
 			if (scroll_pos != this->vscroll->GetPosition()) {
 				this->vscroll->SetPosition(scroll_pos);
 
@@ -1221,8 +1221,8 @@ struct AIDebugWindow : public Window {
 				if (log == nullptr) return;
 
 				int y = this->top_offset;
-				for (int i = this->vscroll->GetPosition(); this->vscroll->IsVisible(i) && i < log->used; i++) {
-					int pos = (i + log->pos + 1 - log->used + log->count) % log->count;
+				for (uint i = this->vscroll->GetPosition(); this->vscroll->IsVisible(i) && i < log->used; i++) {
+					uint pos = (i + log->pos + 1 - log->used + log->count) % log->count;
 					if (log->lines[pos] == nullptr) break;
 
 					TextColour colour;
@@ -1232,7 +1232,7 @@ struct AIDebugWindow : public Window {
 						case ScriptLog::LOG_INFO:     colour = TC_BLACK;  break;
 						case ScriptLog::LOG_WARNING:  colour = TC_YELLOW; break;
 						case ScriptLog::LOG_ERROR:    colour = TC_RED;    break;
-						default:                  colour = TC_BLACK;  break;
+						default:                      colour = TC_BLACK;  break;
 					}
 
 					/* Check if the current line should be highlighted */

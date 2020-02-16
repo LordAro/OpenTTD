@@ -311,7 +311,7 @@ class NetworkContentListWindow : public Window, ContentCallback {
 	Dimension checkbox_size;     ///< Size of checkbox/"blot" sprite
 
 	const ContentInfo *selected; ///< The selected content info
-	int list_pos;                ///< Our position in the list
+	uint list_pos;               ///< Our position in the list
 	uint filesize_sum;           ///< The sum of all selected file sizes
 	Scrollbar *vscroll;          ///< Cache of the vertical scrollbar
 
@@ -398,7 +398,7 @@ class NetworkContentListWindow : public Window, ContentCallback {
 		this->content.RebuildDone();
 		this->SortContentList();
 
-		this->vscroll->SetCount((int)this->content.size()); // Update the scrollbar
+		this->vscroll->SetCount(this->content.size()); // Update the scrollbar
 		this->ScrollToSelected();
 	}
 
@@ -432,8 +432,8 @@ class NetworkContentListWindow : public Window, ContentCallback {
 	{
 		if (!this->content.Sort()) return;
 
-		int idx = find_index(this->content, this->selected);
-		if (idx >= 0) this->list_pos = idx;
+		auto const it = std::find(this->content.begin(), this->content.end(), this->selected);
+		if (it != this->content.end()) this->list_pos = it - this->content.begin();
 	}
 
 	/** Filter content by tags/name */
@@ -810,7 +810,9 @@ public:
 			case WID_NCL_NAME:
 				if (this->content.SortType() == widget - WID_NCL_CHECKBOX) {
 					this->content.ToggleSortOrder();
-					if (this->content.size() > 0) this->list_pos = (int)this->content.size() - this->list_pos - 1;
+					if (this->content.size() > 0) {
+						this->list_pos = UnderflowSafeSub(this->content.size(), this->list_pos - 1);
+					}
 				} else {
 					this->content.SetSortType(widget - WID_NCL_CHECKBOX);
 					this->content.ForceResort();
@@ -869,15 +871,15 @@ public:
 				break;
 			case WKC_DOWN:
 				/* scroll down by one */
-				if (this->list_pos < (int)this->content.size() - 1) this->list_pos++;
+				if (!this->content.empty() && this->list_pos < this->content.size() - 1) this->list_pos++;
 				break;
 			case WKC_PAGEUP:
 				/* scroll up a page */
-				this->list_pos = (this->list_pos < this->vscroll->GetCapacity()) ? 0 : this->list_pos - this->vscroll->GetCapacity();
+				this->list_pos = UnderflowSafeSub(this->list_pos, this->vscroll->GetCapacity());
 				break;
 			case WKC_PAGEDOWN:
 				/* scroll down a page */
-				this->list_pos = std::min(this->list_pos + this->vscroll->GetCapacity(), (int)this->content.size() - 1);
+				this->list_pos = std::min<uint>(this->list_pos + this->vscroll->GetCapacity(), this->content.size() - 1);
 				break;
 			case WKC_HOME:
 				/* jump to beginning */
@@ -885,7 +887,7 @@ public:
 				break;
 			case WKC_END:
 				/* jump to end */
-				this->list_pos = (int)this->content.size() - 1;
+				this->list_pos = this->content.size() - 1;
 				break;
 
 			case WKC_SPACE:

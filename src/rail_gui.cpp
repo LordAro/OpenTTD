@@ -967,13 +967,14 @@ public:
 			_railstation.station_count = StationClass::Get(_railstation.station_class)->GetSpecCount();
 			_railstation.station_type = std::min<int>(_railstation.station_type, _railstation.station_count - 1);
 
-			int count = 0;
+			uint count = 0;
 			for (uint i = 0; i < StationClass::GetClassCount(); i++) {
 				if (i == STAT_CLASS_WAYP) continue;
 				count++;
 			}
 			this->vscroll->SetCount(count);
-			this->vscroll->SetPosition(Clamp(_railstation.station_class - 2, 0, std::max(this->vscroll->GetCount() - this->vscroll->GetCapacity(), 0)));
+			uint scroll_pos = UnderflowSafeSub(this->vscroll->GetCount(), this->vscroll->GetCapacity());
+			this->vscroll->SetPosition(Clamp(_railstation.station_class - 2, 0, scroll_pos));
 
 			NWidgetMatrix *matrix = this->GetWidget<NWidgetMatrix>(WID_BRAS_MATRIX);
 			matrix->SetScrollbar(this->vscroll2);

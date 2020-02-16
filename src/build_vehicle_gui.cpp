@@ -1595,7 +1595,7 @@ struct BuildVehicleWindow : Window {
 	void OnPaint() override
 	{
 		this->GenerateBuildList();
-		this->vscroll->SetCount((uint)this->eng_list.size());
+		this->vscroll->SetCount(this->eng_list.size());
 
 		this->SetWidgetsDisabledState(this->sel_engine == INVALID_ENGINE, WID_BV_SHOW_HIDE, WID_BV_BUILD, WID_BV_RENAME, WIDGET_LIST_END);
 

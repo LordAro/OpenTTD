@@ -261,7 +261,7 @@ protected:
 
 		this->servers.shrink_to_fit();
 		this->servers.RebuildDone();
-		this->vscroll->SetCount((int)this->servers.size());
+		this->vscroll->SetCount(this->servers.size());
 
 		/* Sort the list of network games as requested. */
 		this->servers.Sort();
@@ -545,7 +545,7 @@ public:
 			case WID_NG_MATRIX: {
 				uint16 y = r.top;
 
-				const int max = std::min(this->vscroll->GetPosition() + this->vscroll->GetCapacity(), (int)this->servers.size());
+				const int max = std::min<uint>(this->vscroll->GetPosition() + this->vscroll->GetCapacity(), this->servers.size());
 
 				for (int i = this->vscroll->GetPosition(); i < max; ++i) {
 					const NetworkGameList *ngl = this->servers[i];
@@ -807,12 +807,12 @@ public:
 				case WKC_PAGEUP:
 					/* scroll up a page */
 					if (this->list_pos == SLP_INVALID) return ES_HANDLED;
-					this->list_pos = (this->list_pos < this->vscroll->GetCapacity()) ? 0 : this->list_pos - this->vscroll->GetCapacity();
+					this->list_pos = UnderflowSafeSub(this->list_pos, this->vscroll->GetCapacity());
 					break;
 				case WKC_PAGEDOWN:
 					/* scroll down a page */
 					if (this->list_pos == SLP_INVALID) return ES_HANDLED;
-					this->list_pos = std::min(this->list_pos + this->vscroll->GetCapacity(), (int)this->servers.size() - 1);
+					this->list_pos = std::min<uint>(this->list_pos + this->vscroll->GetCapacity(), this->servers.size() - 1);
 					break;
 				case WKC_HOME:
 					/* jump to beginning */
@@ -1430,7 +1430,7 @@ struct NetworkLobbyWindow : public Window {
 
 		int y = r.top + WD_MATRIX_TOP;
 		/* Draw company list */
-		int pos = this->vscroll->GetPosition();
+		uint pos = this->vscroll->GetPosition();
 		while (pos < this->server->info.companies_on) {
 			byte company = NetworkLobbyFindCompanyIndex(pos);
 			bool income = false;

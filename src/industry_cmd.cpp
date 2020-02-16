@@ -2437,7 +2437,7 @@ void IndustryBuildData::SetupTargetCount()
 	if (total_prob == 0) return; // No buildable industries.
 
 	/* Subtract forced industries from the number of industries available for construction. */
-	total_amount = (total_amount <= force_build) ? 0 : total_amount - force_build;
+	total_amount = UnderflowSafeSub(total_amount, force_build);
 
 	/* Assign number of industries that should be aimed for, by using the probability as a weight. */
 	while (total_amount > 0) {

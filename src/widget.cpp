@@ -1495,7 +1495,7 @@ void NWidgetMatrix::SetClicked(int clicked)
 {
 	this->clicked = clicked;
 	if (this->clicked >= 0 && this->sb != nullptr && this->widgets_x != 0) {
-		int vpos = (this->clicked / this->widgets_x) * this->widget_h; // Vertical position of the top.
+		uint vpos = (this->clicked / this->widgets_x) * this->widget_h; // Vertical position of the top.
 		/* Need to scroll down -> Scroll to the bottom.
 		 * However, last entry has no 'this->pip_inter' underneath, and we must stay below this->sb->GetCount() */
 		if (this->sb->GetPosition() < vpos) vpos += this->widget_h - this->pip_inter - 1;
@@ -1508,7 +1508,7 @@ void NWidgetMatrix::SetClicked(int clicked)
  * @note Updates the number of elements/capacity of the real scrollbar.
  * @param count The number of elements.
  */
-void NWidgetMatrix::SetCount(int count)
+void NWidgetMatrix::SetCount(uint count)
 {
 	this->count = count;
 
@@ -1603,19 +1603,19 @@ NWidgetCore *NWidgetMatrix::GetWidgetFromPos(int x, int y)
 	/* Falls outside of the matrix widget. */
 	if (!IsInsideBS(x, this->pos_x, this->current_x) || !IsInsideBS(y, this->pos_y, this->current_y)) return nullptr;
 
-	int start_x, start_y, base_offs_x, base_offs_y;
+	uint start_x, start_y, base_offs_x, base_offs_y;
 	this->GetScrollOffsets(start_x, start_y, base_offs_x, base_offs_y);
 
 	bool rtl = _current_text_dir == TD_RTL;
 
 	int widget_col = (rtl ?
-				-x + (int)this->pip_post + (int)this->pos_x + base_offs_x + (int)this->widget_w - 1 - (int)this->pip_inter :
-				 x - (int)this->pip_pre  - (int)this->pos_x - base_offs_x
+				-x + (int)this->pip_post + (int)this->pos_x + (int)base_offs_x + (int)this->widget_w - 1 - (int)this->pip_inter :
+				 x - (int)this->pip_pre  - (int)this->pos_x - (int)base_offs_x
 			) / this->widget_w;
 
-	int widget_row = (y - base_offs_y - (int)this->pip_pre - (int)this->pos_y) / this->widget_h;
+	int widget_row = (y - (int)base_offs_y - (int)this->pip_pre - (int)this->pos_y) / this->widget_h;
 
-	int sub_wid = (widget_row + start_y) * this->widgets_x + start_x + widget_col;
+	uint sub_wid = (widget_row + start_y) * this->widgets_x + start_x + widget_col;
 	if (sub_wid >= this->count) return nullptr;
 
 	NWidgetCore *child = dynamic_cast<NWidgetCore *>(this->head);
@@ -1645,30 +1645,30 @@ NWidgetCore *NWidgetMatrix::GetWidgetFromPos(int x, int y)
 	/* Get the appropriate offsets so we can draw the right widgets. */
 	NWidgetCore *child = dynamic_cast<NWidgetCore *>(this->head);
 	assert(child != nullptr);
-	int start_x, start_y, base_offs_x, base_offs_y;
+	uint start_x, start_y, base_offs_x, base_offs_y;
 	this->GetScrollOffsets(start_x, start_y, base_offs_x, base_offs_y);
 
-	int offs_y = base_offs_y;
-	for (int y = start_y; y < start_y + this->widgets_y + 1; y++, offs_y += this->widget_h) {
+	uint offs_y = base_offs_y;
+	for (uint y = start_y; y < start_y + this->widgets_y + 1; y++, offs_y += this->widget_h) {
 		/* Are we within bounds? */
 		if (offs_y + child->smallest_y <= 0) continue;
-		if (offs_y >= (int)this->current_y) break;
+		if (offs_y >= this->current_y) break;
 
 		/* We've passed our amount of widgets. */
 		if (y * this->widgets_x >= this->count) break;
 
-		int offs_x = base_offs_x;
-		for (int x = start_x; x < start_x + this->widgets_x + 1; x++, offs_x += rtl ? -this->widget_w : this->widget_w) {
+		uint offs_x = base_offs_x;
+		for (uint x = start_x; x < start_x + this->widgets_x + 1; x++, offs_x += rtl ? -this->widget_w : this->widget_w) {
 			/* Are we within bounds? */
 			if (offs_x + child->smallest_x <= 0) continue;
-			if (offs_x >= (int)this->current_x) continue;
+			if (offs_x >= this->current_x) continue;
 
 			/* Do we have this many widgets? */
-			int sub_wid = y * this->widgets_x + x;
+			uint sub_wid = y * this->widgets_x + x;
 			if (sub_wid >= this->count) break;
 
 			child->AssignSizePosition(ST_RESIZE, offs_x, offs_y, child->smallest_x, child->smallest_y, rtl);
-			child->SetLowered(this->clicked == sub_wid);
+			child->SetLowered(this->clicked == (int)sub_wid);
 			SB(child->index, 16, 16, sub_wid);
 			child->Draw(w);
 		}
@@ -1685,7 +1685,7 @@ NWidgetCore *NWidgetMatrix::GetWidgetFromPos(int x, int y)
  * @param[out] base_offs_x The base horizontal offset in pixels (X position of the column \a start_x).
  * @param[out] base_offs_y The base vertical offset in pixels (Y position of the column \a start_y).
  */
-void NWidgetMatrix::GetScrollOffsets(int &start_x, int &start_y, int &base_offs_x, int &base_offs_y)
+void NWidgetMatrix::GetScrollOffsets(uint &start_x, uint &start_y, uint &base_offs_x, uint &base_offs_y)
 {
 	base_offs_x = _current_text_dir == TD_RTL ? this->widget_w * (this->widgets_x - 1) : 0;
 	base_offs_y = 0;

@@ -160,6 +160,18 @@ static inline uint16 ClampToU16(const uint64 a)
 }
 
 /**
+ * Underflow safe unsigned subtraction
+ * @param a First number
+ * @param b Second number
+ * @return a - b, or 0 if it would underflow
+ */
+static inline uint UnderflowSafeSub(uint a, uint b)
+{
+	if (b > a) return 0;
+	return a - b;
+}
+
+/**
  * Returns the (absolute) difference between two (scalar) variables
  *
  * @param a The first scalar

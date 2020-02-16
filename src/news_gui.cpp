@@ -404,8 +404,8 @@ struct NewsWindow : Window {
 
 		/* Update minimal size with length of the multi-line string. */
 		Dimension d = *size;
-		d.width = (d.width >= padding.width) ? d.width - padding.width : 0;
-		d.height = (d.height >= padding.height) ? d.height - padding.height : 0;
+		d.width = UnderflowSafeSub(d.width, padding.width);
+		d.height = UnderflowSafeSub(d.height, padding.height);
 		d = GetStringMultiLineBoundingBox(str, d);
 		d.width += padding.width;
 		d.height += padding.height;

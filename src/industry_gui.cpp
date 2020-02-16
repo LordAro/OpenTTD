@@ -268,7 +268,7 @@ static WindowDesc _build_industry_desc(
 
 /** Build (fund or prospect) a new industry, */
 class BuildIndustryWindow : public Window {
-	int selected_index;                         ///< index of the element in the matrix
+	uint selected_index;                        ///< index of the element in the matrix
 	IndustryType selected_type;                 ///< industry corresponding to the above index
 	uint16 count;                               ///< How many industries are loaded
 	IndustryType index[NUM_INDUSTRYTYPES + 1];  ///< Type of industry, in the order it was loaded
@@ -306,7 +306,7 @@ class BuildIndustryWindow : public Window {
 				 * and raw ones are loaded only when setting allows it */
 				if (_game_mode != GM_EDITOR && indsp->IsRawIndustry() && _settings_game.construction.raw_industry_construction == 0) {
 					/* Unselect if the industry is no longer in the list */
-					if (this->selected_type == ind) this->selected_index = -1;
+					if (this->selected_type == ind) this->selected_index = UINT_MAX;
 					continue;
 				}
 				this->index[this->count] = ind;
@@ -319,7 +319,7 @@ class BuildIndustryWindow : public Window {
 
 		/* first industry type is selected if the current selection is invalid.
 		 * I'll be damned if there are none available ;) */
-		if (this->selected_index == -1) {
+		if (this->selected_index == UINT_MAX) {
 			this->selected_index = 0;
 			this->selected_type = this->index[0];
 		}
@@ -384,7 +384,7 @@ class BuildIndustryWindow : public Window {
 public:
 	BuildIndustryWindow() : Window(&_build_industry_desc)
 	{
-		this->selected_index = -1;
+		this->selected_index = UINT_MAX;
 		this->selected_type = INVALID_INDUSTRYTYPE;
 
 		this->CreateNestedTree();
@@ -1348,7 +1348,7 @@ protected:
 		this->industries.Filter(filter);
 		this->industries.Sort();
 
-		this->vscroll->SetCount((uint)this->industries.size()); // Update scrollbar as well.
+		this->vscroll->SetCount(this->industries.size()); // Update scrollbar as well.
 
 		this->SetDirty();
 	}
@@ -1539,7 +1539,7 @@ public:
 				break;
 
 			case WID_ID_INDUSTRY_LIST: {
-				int n = 0;
+				uint n = 0;
 				int y = r.top + WD_FRAMERECT_TOP;
 				if (this->industries.size() == 0) {
 					DrawString(r.left + WD_FRAMERECT_LEFT, r.right - WD_FRAMERECT_RIGHT, y, STR_INDUSTRY_DIRECTORY_NONE);
