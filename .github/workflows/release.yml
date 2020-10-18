@@ -1,0 +1,217 @@
+name: Release
+
+# XXX
+on:
+  pull_request:
+  push:
+    branches:
+    - master
+    - release-workflow
+
+jobs:
+  # Split job so that we can ensure that we have a version with git>=2.18, which is required for checkout
+  linux-checkout:
+    runs-on: ubuntu-20.04
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Save checkout dir
+      uses: actions/upload-artifact@v2
+      with:
+        name: openttd-src
+        path: .
+
+  linux:
+    name: Linux
+    needs: linux-checkout
+
+    strategy:
+      fail-fast: false
+      matrix:
+        container:
+          - "ubuntu:16.04"
+          - "ubuntu:18.04"
+          - "ubuntu:20.04"
+          - "ubuntu:20.10"
+
+    runs-on: ubuntu-20.04
+    container:
+      image: ${{ matrix.container }}
+    env:
+      CTEST_OUTPUT_ON_FAILURE: 1
+
+    steps:
+    - name: Download source
+      uses: actions/download-artifact@v2
+      with:
+        name: openttd-src
+
+    - name: Install common dependencies
+      run: |
+        apt-get update
+        apt-get install -y --no-install-recommends \
+          cmake \
+          g++ \
+          git \
+          make \
+          openssl \
+          libfontconfig-dev \
+          libfluidsynth-dev \
+          libicu-dev \
+          liblzma-dev \
+          liblzo2-dev \
+          libsdl2-dev \
+          libxdg-basedir-dev \
+          zlib1g-dev \
+          # EOF
+      env:
+        DEBIAN_FRONTEND: noninteractive
+
+    - name: Install native dependencies
+      run: |
+        apt-get install -y --no-install-recommends \
+      env:
+        DEBIAN_FRONTEND: noninteractive
+
+    - name: Write ottdrev
+      run: 'echo "TODO: Write .ottdrev if nightly build"'
+
+    - name: CMake
+      run: |
+        mkdir -p build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=Release ${GITHUB_WORKSPACE}
+
+    - uses: ammaraskar/gcc-problem-matcher@master
+    - name: Build Deb package
+      run: cd build && make -j2 package
+
+    - name: Set checksums
+      run: |
+        cd build/bundles
+
+        # CPack generates sha256, but with a slightly different name than
+        # our own convention. Also, because we rename files, the content
+        # might be out of date. To be safe, we remove it and replace it
+        # with our own version.
+        rm -f *.sha256
+
+        for i in *; do
+          openssl dgst -r -md5 -hex $i > $i.md5sum
+          openssl dgst -r -sha1 -hex $i > $i.sha1sum
+          openssl dgst -r -sha256 -hex $i > $i.sha256sum
+        done
+        ls -l
+        echo "SAFE_OSNAME=${{ matrix.container }}" | tr ':' '-' >> $GITHUB_ENV
+
+    - name: Save bundles
+      uses: actions/upload-artifact@v2
+      with:
+        name: openttd-bundle-${{ env.SAFE_OSNAME }}
+        path: build/bundles
+
+  macos:
+    name: Mac OS
+
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+    env:
+      CTEST_OUTPUT_ON_FAILURE: 1
+      MACOSX_DEPLOYMENT_TARGET: 10.9
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: brew install pkg-config lzo xz libpng freetype
+      env:
+        HOMEBREW_NO_AUTO_UPDATE: 1
+
+    - name: CMake
+      run: mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release ..
+
+    - uses: ammaraskar/gcc-problem-matcher@master
+    - name: Build package
+      run: cd build && make -j2 package
+
+    - name: Set checksums
+      run: |
+        cd build/bundles
+
+        # CPack generates sha256, but with a slightly different name than
+        # our own convention. Also, because we rename files, the content
+        # might be out of date. To be safe, we remove it and replace it
+        # with our own version.
+        rm -f *.sha256
+
+        for i in *; do
+          openssl dgst -r -md5 -hex $i > $i.md5sum
+          openssl dgst -r -sha1 -hex $i > $i.sha1sum
+          openssl dgst -r -sha256 -hex $i > $i.sha256sum
+        done
+        ls -l
+
+    - name: Save bundles
+      uses: actions/upload-artifact@v2
+      with:
+        name: openttd-bundle-macosx
+        path: build/bundles
+
+  windows:
+    name: Windows
+
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86, x64]
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Prepare vcpkg (with cache)
+      uses: lukka/run-vcpkg@v4
+      with:
+        vcpkgDirectory: 'c:/vcpkg'
+        doNotUpdateVcpkg: true
+        vcpkgArguments: 'liblzma libpng lzo zlib'
+        vcpkgTriplet: '${{ matrix.arch }}-windows-static'
+
+    - uses: ammaraskar/msvc-problem-matcher@master
+    - name: 'Build'
+      uses: lukka/run-cmake@v3
+      with:
+        cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
+        useVcpkgToolchainFile: true
+        buildDirectory: '${{ runner.workspace }}/build'
+        cmakeBuildType: RelWithDebInfo
+        cmakeAppendedArgs: ' -GNinja -DOPTION_USE_NSIS="ON"' # TODO: Should only use NSIS on stable release
+
+    - name: Generate bundle
+      run: cd ${{ runner.workspace }}/build && cpack
+
+    - name: Rename and compress pdb
+      shell: bash
+      run: |
+        cd "${{ runner.workspace }}/build/bundles"
+
+        cp ../openttd.pdb openttd-windows-${{ matrix.arch }}.pdb # TODO: Name this to match the zip
+        xz -9 openttd-windows-${{ matrix.arch }}.pdb
+
+        rm -f *.sha256
+        for i in *; do
+          openssl dgst -r -md5 -hex $i > $i.md5sum
+          openssl dgst -r -sha1 -hex $i > $i.sha1sum
+          openssl dgst -r -sha256 -hex $i > $i.sha256sum
+        done
+
+    - name: Save bundles
+      uses: actions/upload-artifact@v2
+      with:
+        name: openttd-bundle-windows-${{ matrix.arch }}
+        path: ${{ runner.workspace }}/build/bundles
