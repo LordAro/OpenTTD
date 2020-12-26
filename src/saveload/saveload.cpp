@@ -66,9 +66,10 @@ FileToSaveLoad _file_to_saveload; ///< File to save or load in the openttd loop.
 uint32 _ttdp_version;        ///< version of TTDP savegame (if applicable)
 SaveLoadVersion _sl_version; ///< the major savegame version identifier
 byte   _sl_minor_version;    ///< the minor savegame version, DO NOT USE!
-bool _sl_is_ext_version;     ///< is this an extended savegame version, with more info in the SLXI chunk?
 char _savegame_format[8];    ///< how to compress savegames
 bool _do_autosave;           ///< are we doing an autosave at the moment?
+
+extern bool _sl_is_ext_version;
 
 /** What are we currently doing? */
 enum SaveLoadAction {
@@ -218,7 +219,7 @@ struct SaveLoadParams {
 static SaveLoadParams _sl; ///< Parameters used for/at saveload.
 
 /* these define the chunks */
-//extern const ChunkHandler _version_ext_chunk_handlers[];
+extern const ChunkHandler _version_ext_chunk_handlers[];
 extern const ChunkHandler _gamelog_chunk_handlers[];
 extern const ChunkHandler _map_chunk_handlers[];
 extern const ChunkHandler _misc_chunk_handlers[];
@@ -255,7 +256,7 @@ extern const ChunkHandler _persistent_storage_chunk_handlers[];
 
 /** Array of all chunks in a savegame, \c nullptr terminated. */
 static const ChunkHandler * const _chunk_handlers[] = {
-//	_version_ext_chunk_handlers,            // this should be first, such that it is saved first, as when loading it affects the loading of subsequent chunks
+	_version_ext_chunk_handlers,            // this should be first, such that it is saved first, as when loading it affects the loading of subsequent chunks
 	_gamelog_chunk_handlers,
 	_map_chunk_handlers,
 	_misc_chunk_handlers,
@@ -2631,7 +2632,6 @@ static SaveOrLoadResult DoLoad(LoadFilter *reader, bool load_check)
 			_sl.lf->Reset();
 			_sl_version = SL_MIN_VERSION;
 			_sl_minor_version = 0;
-			_sl_is_ext_version = false;
 			SlXvResetState();
 
 			/* Try to find the LZO savegame format; it uses 'OTTD' as tag. */
@@ -2804,7 +2804,6 @@ SaveOrLoadResult SaveOrLoad(const char *filename, SaveLoadOperation fop, Detaile
 			if (!LoadOldSaveGame(filename)) return SL_REINIT;
 			_sl_version = SL_MIN_VERSION;
 			_sl_minor_version = 0;
-			_sl_is_ext_version = false;
 			SlXvResetState();
 			GamelogStartAction(GLAT_LOAD);
 			if (!AfterLoadGame()) {
