@@ -13,6 +13,9 @@ on:
   release:
     types:
     - published
+  push:
+    branches:
+    - debian-buster-hack
 
 jobs:
   source:
