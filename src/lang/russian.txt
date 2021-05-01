@@ -1148,11 +1148,11 @@ STR_GAME_OPTIONS_RESOLUTION_OTHER                               :Другое
 STR_GAME_OPTIONS_RESOLUTION_ITEM                                :{NUM}x{NUM}
 
 STR_GAME_OPTIONS_VIDEO_ACCELERATION                             :{BLACK}Аппаратное ускорение
-STR_GAME_OPTIONS_VIDEO_ACCELERATION_TOOLTIP                     :{BLACK}Нажмите здесь, чтобы включить/выключить аппаратное ускорение в OpenTTD. После этого игру потребуется перезапустить.
+STR_GAME_OPTIONS_VIDEO_ACCELERATION_TOOLTIP                     :{BLACK}Включить/выключить аппаратное ускорение. После этого игру потребуется перезапустить.
 STR_GAME_OPTIONS_VIDEO_ACCELERATION_RESTART                     :{WHITE}Эта настройка будет применена только после перезапуска игры
 
 STR_GAME_OPTIONS_VIDEO_VSYNC                                    :{BLACK}Вертикальная синхронизация
-STR_GAME_OPTIONS_VIDEO_VSYNC_TOOLTIP                            :{BLACK}Нажмите здесь, чтобы включить/выключить вертикальную синхронизацию. После этого игру потребуется перезапустить. Работает только при включённом аппаратном ускорении.
+STR_GAME_OPTIONS_VIDEO_VSYNC_TOOLTIP                            :{BLACK}Включить/выключить вертикальную синхронизацию. После этого игру потребуется перезапустить. Работает только при включённом аппаратном ускорении.
 
 STR_GAME_OPTIONS_GUI_ZOOM_FRAME                                 :{BLACK}Размер элементов интерфейса
 STR_GAME_OPTIONS_GUI_ZOOM_DROPDOWN_TOOLTIP                      :{BLACK}Выберите размер элементов интерфейса
@@ -3305,7 +3305,7 @@ STR_NEWGRF_BROKEN                                               :{WHITE}Файл
 STR_NEWGRF_BROKEN_POWERED_WAGON                                 :{WHITE}Меняется состояние локомотива «{1:ENGINE}», находящегося вне депо
 STR_NEWGRF_BROKEN_VEHICLE_LENGTH                                :{WHITE}Меняется длина транспорта «{1:ENGINE}», находящегося вне депо
 STR_NEWGRF_BROKEN_CAPACITY                                      :{WHITE}Он изменил ёмкость ТС «{1:ENGINE}» за пределами депо или без задания на переоборудование
-STR_BROKEN_VEHICLE_LENGTH                                       :{WHITE}Поезд «{VEHICLE}», принадлежащий «{COMPANY}», имеет неправильную длину. Вероятно, это вызвано проблемами в файле новой графики (NewGRF). Игра может рассинхронизироваться или вылететь.
+STR_BROKEN_VEHICLE_LENGTH                                       :{WHITE}Поезд «{VEHICLE}», принадлежащий «{COMPANY}», имеет неправильную длину. Вероятно, это вызвано ошибками в одном из модулей NewGRF. Игра может рассинхронизироваться или вылететь.
 
 STR_NEWGRF_BUGGY                                                :{WHITE}NewGRF «{0:STRING}» предоставляет неверную информацию.
 STR_NEWGRF_BUGGY_ARTICULATED_CARGO                              :{WHITE}Информация о вместимости/переоборудовании для локомотива «{1:ENGINE}» после постройки отличается от сведений в списке покупки, что может помешать функции автообновления/автозамены корректно произвести переоборудование.
