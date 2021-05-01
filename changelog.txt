@@ -2,6 +2,7 @@
 ------------------------------------------------------------------------
 Change: [Win32] Limit hardware accelerated video driver to OpenGL 3.2 or higher (#9077)
 Change: More improvements to windows at different GUI scales (#9075, #9102, #9107, #9133)
+Fix #6598: Crash when trying to connect to a server from a network game (#9163)
 Fix #9152: Screenshot success popup window was treated as an error (#9159)
 Fix: [Network,Win32] Network errors were handled badly (#9116)
 Fix: [Network] Savegame transfer could stall in certain circumstances (#9106)
