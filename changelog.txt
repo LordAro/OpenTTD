@@ -1,3 +1,15 @@
+1.11.2 (2021-05-01)
+------------------------------------------------------------------------
+Change: [Win32] Limit hardware accelerated video driver to OpenGL 3.2 or higher (#9077)
+Change: More improvements to windows at different GUI scales (#9075, #9102, #9107, #9133)
+Fix #9152: Screenshot success popup window was treated as an error (#9159)
+Fix: [Network,Win32] Network errors were handled badly (#9116)
+Fix: [Network] Savegame transfer could stall in certain circumstances (#9106)
+Fix #9097: [NewGRF] Cargo variable initial payment variable was being truncated (#9098)
+Fix: Do not include Regression test AI in bundle (#9068)
+Fix #9062: Executable version was not updated (#9066, #9154)
+
+
 1.11.1 (2021-04-18)
 ------------------------------------------------------------------------
 Feature: Toggle to enable/disable vsync (#8997)
