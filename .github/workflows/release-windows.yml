@@ -120,12 +120,17 @@ jobs:
         mkdir build
         cd build
 
+        # Automatically disable asserts for stable releases
+        # (Only needed with the installer, as this is only for tags)
+        IS_STABLE_TAG=$(if [ "$(cat .ottdrev | cut -f 6 -d$'\t')" = "1" ]; then echo "OFF"; else echo "ON"; fi)
+
         echo "::group::CMake"
         cmake ${GITHUB_WORKSPACE} \
           -GNinja \
           -DVCPKG_TARGET_TRIPLET=${{ matrix.arch }}-windows-static \
           -DCMAKE_TOOLCHAIN_FILE="c:\vcpkg\scripts\buildsystems\vcpkg.cmake" \
           -DOPTION_USE_NSIS=ON \
+          -DOPTION_USE_ASSERTS=${IS_STABLE_TAG} \
           -DHOST_BINARY_DIR=${GITHUB_WORKSPACE}/build-host \
           -DCMAKE_BUILD_TYPE=RelWithDebInfo \
           -DWINDOWS_CERTIFICATE_COMMON_NAME="${WINDOWS_CERTIFICATE_COMMON_NAME}" \

@@ -95,6 +95,9 @@ jobs:
         mkdir build-arm64
         cd build-arm64
 
+        # Automatically disable asserts for stable releases
+        IS_STABLE_TAG=$(if [ "$(cat .ottdrev | cut -f 6 -d$'\t')" = "1" ]; then echo "OFF"; else echo "ON"; fi)
+
         echo "::group::CMake"
         cmake ${GITHUB_WORKSPACE} \
           -DCMAKE_OSX_ARCHITECTURES=arm64 \
@@ -102,6 +105,7 @@ jobs:
           -DCMAKE_TOOLCHAIN_FILE=/usr/local/share/vcpkg/scripts/buildsystems/vcpkg.cmake \
           -DHOST_BINARY_DIR=${GITHUB_WORKSPACE}/build-host \
           -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+          -DOPTION_USE_ASSERTS=${IS_STABLE_TAG} \
           # EOF
         echo "::endgroup::"
 
@@ -115,6 +119,9 @@ jobs:
         mkdir build-x64
         cd build-x64
 
+        # Automatically disable asserts for stable releases
+        IS_STABLE_TAG=$(if [ "$(cat .ottdrev | cut -f 6 -d$'\t')" = "1" ]; then echo "OFF"; else echo "ON"; fi)
+
         echo "::group::CMake"
         cmake ${GITHUB_WORKSPACE} \
           -DCMAKE_OSX_ARCHITECTURES=x86_64 \
@@ -122,6 +129,7 @@ jobs:
           -DCMAKE_TOOLCHAIN_FILE=/usr/local/share/vcpkg/scripts/buildsystems/vcpkg.cmake \
           -DHOST_BINARY_DIR=${GITHUB_WORKSPACE}/build-host \
           -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+          -DOPTION_USE_ASSERTS=${IS_STABLE_TAG} \
           -DCPACK_BUNDLE_APPLE_CERT_APP=${{ secrets.APPLE_DEVELOPER_CERTIFICATE_ID }} \
           "-DCPACK_BUNDLE_APPLE_CODESIGN_PARAMETER=--deep -f --options runtime" \
           -DAPPLE_UNIVERSAL_PACKAGE=1 \
